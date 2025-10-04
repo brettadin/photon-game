@@ -1,9 +1,6 @@
-extends Resource
+extends "res://scripts/abilities/ability.gd"
 class_name ParticleAbility
 
-@export var ability_name: String = ""
-@export_multiline var description: String = ""
-@export var cooldown: float = 0.0
 @export var activation_duration: float = 0.0
 @export var activation_profile: Dictionary = {}
 @export var activation_keywords: Array[StringName] = []
@@ -20,6 +17,9 @@ func on_unequip(player: PlayerAvatar) -> void:
     player.remove_stat_profile(self)
 
 func activate(player: PlayerAvatar, context: Dictionary = {}) -> Dictionary:
+    return super.activate(player, context)
+
+func _execute_activation(player: PlayerAvatar, context: Dictionary = {}) -> Dictionary:
     if activation_profile.is_empty():
         return {
             "log": "%s is ready." % ability_name,
@@ -38,8 +38,12 @@ func activate(player: PlayerAvatar, context: Dictionary = {}) -> Dictionary:
     else:
         player.apply_stat_profile(self, profile)
     var message := activation_log_message if activation_log_message != "" else "%s activated." % ability_name
-    return {
+    var result := {
         "log": message,
         "success": true,
         "duration": duration,
     }
+    return _after_activation(player, context, result)
+
+func _after_activation(_player: PlayerAvatar, _context: Dictionary, result: Dictionary) -> Dictionary:
+    return result
