@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ParticleClass" load_steps=2]
+
+[ext_resource type="Script" path="res://scripts/resources/particle_class.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Noble Gas"
+description = "Shield-focused support that projects protective barriers and resists disruption."
+element_group = 5
+base_reactivity = 0.9
+base_defense = 1.2
+keywords = ["support", "heavy_armor"]

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ParticleClass" load_steps=2]
+
+[ext_resource type="Script" path="res://scripts/resources/particle_class.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Chalcogen"
+description = "Corrosive specialist that saturates targets with lingering oxidation."
+element_group = 3
+base_reactivity = 1.1
+base_defense = 0.9
+keywords = ["corrosive"]
