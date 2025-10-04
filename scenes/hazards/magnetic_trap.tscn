@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/hazards/magnetic_trap.gd" id="1"]
+
+[sub_resource type="RectangleShape2D" id="1"]
+extents = Vector2(160, 160)
+
+[node name="MagneticTrap" type="Area2D"]
+script = ExtResource("1")
+trap_strength = 260.0
+immune_class_ids = [&"gluon"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")

@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/hazards/radiation_zone.gd" id="1"]
+
+[sub_resource type="CircleShape2D" id="1"]
+radius = 180.0
+
+[node name="RadiationZone" type="Area2D"]
+script = ExtResource("1")
+intensity = 1.0
+immune_class_ids = [&"electron_neutrino"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")

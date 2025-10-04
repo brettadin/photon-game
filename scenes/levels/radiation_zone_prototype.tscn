@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/radiation_zone.tscn" id="2"]
+[ext_resource type="Resource" path="res://data/classes/particles/electron_neutrino.tres" id="3"]
+
+[node name="RadiationZonePrototype" type="Node2D"]
+
+[node name="Electron" parent="." instance=ExtResource("1")]
+position = Vector2(-220, -200)
+
+[node name="Neutrino" parent="." instance=ExtResource("1")]
+position = Vector2(220, -200)
+particle_class = ExtResource("3")
+
+[node name="RadiationZone" parent="." instance=ExtResource("2")]
+position = Vector2(0, 0)
