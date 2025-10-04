@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ParticleClass" load_steps=2]
+
+[ext_resource type="Script" path="res://scripts/resources/particle_class.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Alkali Metal"
+description = "Explosive glass cannon archetype that floods the field with charged bursts."
+element_group = 1
+base_reactivity = 1.15
+base_defense = 0.75
+keywords = ["explosive"]
