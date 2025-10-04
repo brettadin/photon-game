@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/chemical_vat.tscn" id="2"]
+
+[node name="ChemicalVatPrototype" type="Node2D"]
+
+[node name="ExplosiveCrafter" parent="." instance=ExtResource("1")]
+position = Vector2(-200, -220)
+base_keywords = [&"explosive"]
+
+[node name="CorrosiveCrafter" parent="." instance=ExtResource("1")]
+position = Vector2(200, -220)
+base_keywords = [&"corrosive"]
+
+[node name="ChemicalVat" parent="." instance=ExtResource("2")]
+position = Vector2(0, 0)
