@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Photon — v0.5.1 Laser Prototype (hotfix)</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; color:#cfe9ff; height:100%; }
+  #wrap { display:flex; flex-direction:column; height:100%; }
+  #ui { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size:14px; line-height:1.35; padding:8px 10px; color:#bfe3ff; background:#0b1016; border-bottom:1px solid #0f1926; }
+  #ui code { color:#ffe08a; }
+  #c { flex: 1 1 auto; display:block; width:100%; height:100%; background:#000; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="ui">
+    <strong>ASCII Photon — v0.5.1 Laser Prototype</strong> — WASD move, Q/E rotate, <code>Space</code> fire (hold), <code>T</code> toggle fire,
+    <code>1..5</code> set λ (700/600/500/400/320), <code>-</code>/<code>=</code> fine-tune λ, <code>G</code> toggle energy drain, <code>R</code> reset.
+  </div>
+  <canvas id="c"></canvas>
+</div>
+
+<script>
+(() => {
+  // ---------- Grid & canvas ----------
+  const cellW = 9, cellH = 16;
+  let cols = 128, rows = 48;
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha:false, desynchronized:true });
+  ctx.imageSmoothingEnabled = false;
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Courier New, monospace';
+
+  // ---------- Emitter / laser state (defined BEFORE fitCanvas uses it) ----------
+  const Laser = {
+    x: Math.floor(cols*0.15),
+    y: Math.floor(rows*0.6),
+    angle: 0,               // radians; 0 = east
+    lambdaNm: 600,          // wavelength
+    fireHeld: false,
+    fireLatched: false,
+    fireRate: 12,           // shots per second when held
+    fireCooldown: 0,
+    drainOn: true,
+    batteryMax: 100,
+    battery: 100,
+    rechargePerSec: 8,      // recharge when not firing
+    speedScale(nm){
+      const LMIN=200, LMAX=800;
+      const inv = 1/Math.min(Math.max(nm,LMIN), LMAX);
+      const invMin=1/LMIN, invMax=1/LMAX;
+      return 1.0 + 0.7 * ((inv - invMax) / (invMin - invMax));
+    },
+    costPerShot(nm){
+      const inv = 1/Math.min(Math.max(nm, 200), 800);
+      const invMin = 1/800, invMax = 1/200;
+      const t = (inv - invMin) / (invMax - invMin); // 0..1
+      const cmin = 0.25, cmax = 1.1;
+      return cmin + (cmax - cmin) * Math.min(Math.max(t,0),1);
+    }
+  };
+  function clampEmitter(){
+    Laser.x = Math.max(1, Math.min(cols-2, Laser.x));
+    Laser.y = Math.max(1, Math.min(rows-2, Laser.y));
+  }
+
+  function fitCanvas(){
+    const W = window.innerWidth;
+    const H = window.innerHeight - document.getElementById('ui').offsetHeight;
+    cols = Math.max(96, Math.floor(W / cellW));
+    rows = Math.max(32, Math.floor(H / cellH));
+    canvas.width = cols * cellW;
+    canvas.height = rows * cellH;
+    clampEmitter(); // Laser exists now, so this won't explode
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  // ---------- Input ----------
+  const keys = new Set();
+  window.addEventListener('keydown', (e)=>{
+    keys.add(e.key);
+    if (e.key === ' ') { Laser.fireHeld = true; e.preventDefault(); }
+    if (e.key === 't' || e.key === 'T') Laser.fireLatched = !Laser.fireLatched;
+    if (e.key === 'g' || e.key === 'G') Laser.drainOn = !Laser.drainOn;
+    if (e.key === '1') Laser.lambdaNm = 700;
+    if (e.key === '2') Laser.lambdaNm = 600;
+    if (e.key === '3') Laser.lambdaNm = 500;
+    if (e.key === '4') Laser.lambdaNm = 400;
+    if (e.key === '5') Laser.lambdaNm = 320;
+    if (e.key === '-' || e.key === '_') Laser.lambdaNm = Math.min(800, Math.max(200, Laser.lambdaNm + 5));
+    if (e.key === '=' || e.key === '+') Laser.lambdaNm = Math.min(800, Math.max(200, Laser.lambdaNm - 5));
+    if (e.key === 'r' || e.key === 'R') {
+      Laser.x = Math.floor(cols*0.15);
+      Laser.y = Math.floor(rows*0.6);
+      Laser.angle = 0;
+      Laser.battery = Laser.batteryMax;
+      wavefronts.length = 0;
+    }
+  });
+  window.addEventListener('keyup', (e)=>{
+    keys.delete(e.key);
+    if (e.key === ' ') Laser.fireHeld = false;
+  });
+
+  // ---------- Wavefronts perf-friendly ----------
+  const MAX_WAVEFRONTS = 8;
+  let waveIdSeq = 1;
+  class Wavefront {
+    constructor(segments, lambdaNm){
+      this.id = waveIdSeq++;
+      this.segments = segments;
+      this.lambdaNm = lambdaNm;
+      this.t = 0;
+      this.life = 0.8;
+      this.expand = 11.0;
+      this.sigma = 0.6;
+      this.omega = 7.5;
+      let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+      for (const s of segments){ minx=Math.min(minx,s.ax,s.bx); miny=Math.min(miny,s.ay,s.by); maxx=Math.max(maxx,s.ax,s.bx); maxy=Math.max(maxy,s.ay,s.by); }
+      this.baseBBox={minx,miny,maxx,maxy};
+    }
+    alive(){ return this.t < this.life; }
+    step(dt){ this.t += dt; }
+    bbox(){
+      const s = Laser.speedScale(this.lambdaNm);
+      const r = this.expand * s * this.t + 2.5 * this.sigma;
+      return { minx:this.baseBBox.minx - r, miny:this.baseBBox.miny - r, maxx:this.baseBBox.maxx + r, maxy:this.baseBBox.maxy + r };
+    }
+    bboxContainsCell(cx,cy){ const b=this.bbox(); return cx>=b.minx && cx<=b.maxx && cy>=b.miny && cy<=b.maxy; }
+    minDist(cx,cy){
+      let min=1e9;
+      for (const s of this.segments){
+        const dx=s.bx-s.ax, dy=s.by-s.ay;
+        const len2 = dx*dx + dy*dy + 1e-6;
+        const t=Math.max(0, Math.min(1, ((cx - s.ax)*dx + (cy - s.ay)*dy)/len2));
+        const px=s.ax + t*dx, py=s.ay + t*dy;
+        const d=Math.hypot(cx-px, cy-py); if (d<min) min=d;
+      }
+      return min;
+    }
+    sample(cx,cy){
+      if (!this.bboxContainsCell(cx,cy)) return 0.0;
+      const s = Laser.speedScale(this.lambdaNm);
+      const w = this.expand * s * this.t;
+      const d = this.minDist(cx,cy);
+      if (Math.abs(d - w) > 3.0) return 0.0;
+      const g = Math.exp(-((d-w)*(d-w)) / (2*this.sigma*this.sigma));
+      const env = Math.max(0, 1 - (this.t/this.life));
+      const stripes = 0.6 + 0.4*Math.sin((w - d)*4.2 - this.t*this.omega);
+      return g * env * stripes;
+    }
+  }
+  const wavefronts = [];
+
+  function rayPath(x, y, angle, lengthCells){
+    const points = [];
+    const dx = Math.cos(angle), dy = Math.sin(angle);
+    for (let i=0;i<lengthCells;i++){
+      const nx = Math.round(x + dx * i);
+      const ny = Math.round(y + dy * i);
+      if (nx<1 || nx>=cols-1 || ny<1 || ny>=rows-1) break;
+      if (points.length===0 || points[points.length-1].x!==nx || points[points.length-1].y!==ny){
+        points.push({x:nx, y:ny});
+      }
+    }
+    return pointsToSegments(points);
+  }
+  function pointsToSegments(pts){
+    const segs=[];
+    for (let i=0;i<pts.length-1;i++){
+      const a=pts[i], b=pts[i+1];
+      if (a.x===b.x && a.y===b.y) continue;
+      segs.push({ ax:a.x+0.5, ay:a.y+0.5, bx:b.x+0.5, by:b.y+0.5 });
+    }
+    return segs;
+  }
+
+  function wavelengthToColor(nm){
+    const x = Math.min(1, Math.max(0, (nm - 380) / (700 - 380)));
+    const hue = (1 - x) * 270;
+    const s = 0.65, v = 1.0;
+    const c = v * s;
+    const h = hue / 60;
+    const xcol = c * (1 - Math.abs((h % 2) - 1));
+    let r=0,g=0,b=0;
+    if (0<=h && h<1){ r=c; g=xcol; b=0; }
+    else if (1<=h && h<2){ r=xcol; g=c; b=0; }
+    else if (2<=h && h<3){ r=0; g=c; b=xcol; }
+    else if (3<=h && h<4){ r=0; g=xcol; b=c; }
+    else if (4<=h && h<5){ r=xcol; g=0; b=c; }
+    else { r=c; g=0; b=xcol; }
+    const m = v - c;
+    return { r:Math.round((r+m)*255), g:Math.round((g+m)*255), b:Math.round((b+m)*255) };
+  }
+  function angleAscii(a){
+    a = ((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+    const oct = Math.round(a/(Math.PI/4))%8;
+    return ['>','/','^','\\','<','\\','v','/'][oct];
+  }
+
+  // ---------- Main loop ----------
+  const ramp = " .:-=+*#%@";
+  const rampLen = ramp.length;
+  let prev = performance.now();
+  function frame(now){
+    const dt = Math.min(0.033, (now-prev)/1000); prev = now;
+
+    // Movement
+    const moveSpeed = 18 * dt;
+    if (keys.has('w') || keys.has('W')) { Laser.y -= moveSpeed; }
+    if (keys.has('s') || keys.has('S')) { Laser.y += moveSpeed; }
+    if (keys.has('a') || keys.has('A')) { Laser.x -= moveSpeed; }
+    if (keys.has('d') || keys.has('D')) { Laser.x += moveSpeed; }
+    if (keys.has('q') || keys.has('Q')) { Laser.angle -= 2.5*dt; }
+    if (keys.has('e') || keys.has('E')) { Laser.angle += 2.5*dt; }
+    clampEmitter();
+
+    // Firing
+    const shooting = (Laser.fireHeld || Laser.fireLatched) && (Laser.drainOn ? Laser.battery > 0 : true);
+    Laser.fireCooldown -= dt;
+    if (shooting && Laser.fireCooldown <= 0){
+      const segs = rayPath(Math.round(Laser.x), Math.round(Laser.y), Laser.angle, Math.floor(cols*0.6));
+      if (segs.length){
+        wavefronts.push(new Wavefront(segs, Laser.lambdaNm));
+        while (wavefronts.length > 8) wavefronts.shift();
+        Laser.fireCooldown += 1 / Laser.fireRate;
+        if (Laser.drainOn){
+          Laser.battery = Math.max(0, Laser.battery - Laser.costPerShot(Laser.lambdaNm));
+        }
+      }else{
+        Laser.fireCooldown = 1 / Laser.fireRate;
+      }
+    }
+    if (!shooting && Laser.drainOn){
+      Laser.battery = Math.min(Laser.batteryMax, Laser.battery + Laser.rechargePerSec * dt);
+    }
+
+    // Step/cull wavefronts
+    for (let i=wavefronts.length-1;i>=0;i--){
+      const wf=wavefronts[i]; wf.step(dt);
+      if (!wf.alive()) wavefronts.splice(i,1);
+    }
+
+    // Clear
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    const tint = wavelengthToColor(Laser.lambdaNm);
+    const rgba = (a=1)=>`rgba(${tint.r},${tint.g},${tint.b},${a})`;
+
+    // Field render
+    for (let y=0;y<rows;y++){
+      for (let x=0;x<cols;x++){
+        // Emitter crosshair + glyph + facing
+        if (Math.round(Laser.x)===x && Math.round(Laser.y)===y){
+          ctx.fillStyle = 'rgba(180,200,220,0.35)';
+          ctx.fillText('+', (x-1)*cellW, y*cellH);
+          ctx.fillText('+', (x+2)*cellW, y*cellH);
+          ctx.fillText('+', x*cellW, (y-1)*cellH);
+          ctx.fillText('+', x*cellW, (y+1)*cellH);
+          ctx.fillStyle = rgba(1);
+          ctx.fillText('@', x*cellW, y*cellH);
+          ctx.fillStyle = rgba(0.9);
+          ctx.fillText(angleAscii(Laser.angle), (x+1)*cellW, y*cellH);
+          continue;
+        }
+        // Wavefront ASCII
+        if (!wavefronts.length) continue;
+        const cx=x+0.5, cy=y+0.5;
+        let amp=0;
+        for (const wf of wavefronts){
+          if (!wf.bboxContainsCell(cx, cy)) continue;
+          amp = Math.max(amp, wf.sample(cx, cy));
+        }
+        if (amp>0.085){
+          const idx=Math.min(rampLen-1, Math.max(0, Math.floor(amp*(rampLen-1))));
+          ctx.fillStyle = rgba(Math.min(1, 0.25 + amp*0.9));
+          ctx.fillText(ramp[idx], x*cellW, y*cellH);
+        }
+      }
+    }
+
+    // HUD
+    function text(x,y,s,style){ ctx.fillStyle=style; ctx.fillText(s, x*cellW, y*cellH); }
+    const s=Laser.speedScale(Laser.lambdaNm).toFixed(2);
+    const nm=Math.round(Laser.lambdaNm);
+    const mode = Laser.fireLatched ? "FIRE: TOGGLE" : (Laser.fireHeld ? "FIRE: HELD" : "FIRE: idle");
+    const drain = Laser.drainOn ? "drain ON" : "drain OFF";
+    const bar = Math.floor((Laser.battery/Laser.batteryMax)*20);
+    text(1,1,`λ=${nm} nm  speed×${s}  ${mode}  ${drain}`, 'rgba(180,220,255,0.85)');
+    text(1,2,`battery [${'#'.repeat(bar)}${'.'.repeat(20-bar)}] ${Math.round(Laser.battery)} / ${Laser.batteryMax}`, 'rgba(160,200,255,0.8)');
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

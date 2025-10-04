@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Photon — Expanded Demo (Blink, Wavefront, Polarizer, Splitter)</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; color:#cfe9ff; height:100%; }
+  #wrap { display:flex; flex-direction:column; height:100%; }
+  #ui { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size:14px; line-height:1.35; padding:8px 10px; color:#bfe3ff; background:#0b1016; border-bottom:1px solid #0f1926; }
+  #ui code { color:#ffe08a; }
+  #c { flex:1 1 auto; display:block; width:100%; height:100%; background:#000; }
+  .k { color:#9ad1ff; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="ui">
+    <strong>ASCII Photon — Expanded</strong> — click to <em>blink</em> instantly; a wavefront expands along your path.<br>
+    Keys: <code>1..5</code> λ 700/600/500/400/320 nm, <code>[</code>/<code>]</code> rotate polarization, <code>C</code> clear, <code>R</code> reset.
+    Hit the <span class="k">polarizer gate</span> with correct polarization to open; trigger both <span class="k">detectors</span> via the splitter within Δt to open the bridge.
+  </div>
+  <canvas id="c"></canvas>
+</div>
+
+<script>
+(() => {
+  // ---------- Grid and canvas ----------
+  const cellW = 9, cellH = 16;
+  let cols = 128, rows = 48;
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  ctx.imageSmoothingEnabled = false;
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Courier New, monospace';
+
+  function fitCanvas() {
+    const W = window.innerWidth;
+    const H = window.innerHeight - document.getElementById('ui').offsetHeight;
+    cols = Math.max(96, Math.floor(W / cellW));
+    rows = Math.max(32, Math.floor(H / cellH));
+    canvas.width = cols * cellW;
+    canvas.height = rows * cellH;
+    placeWorld(); // re-place world elements proportionally
+  }
+  window.addEventListener('resize', fitCanvas);
+
+  // ---------- Photon + optics state ----------
+  const Photon = {
+    lambdaNm: 656.28,
+    polAngle: 0.0, // radians, 0 = horizontal
+    pos: { x: 20, y: 24 },
+    speedScale(nm) {
+      const LMIN = 200, LMAX = 800;
+      const inv = 1 / Math.min(Math.max(nm, LMIN), LMAX);
+      const invMin = 1 / LMIN, invMax = 1 / LMAX;
+      return 1.0 + 0.7 * ((inv - invMax) / (invMin - invMax)); // ~1.0..1.7
+    }
+  };
+
+  // World elements (positions set in placeWorld)
+  const World = {
+    polarizer: { x: 0, y: 0, axisAngle: 0, open: false, lastAmp: 0, threshold: 0.55, openTimer: 0 },
+    doorPos: { x: 0, y: 0 },
+    splitter: { x: 0, y: 0 },
+    detA: { x: 0, y: 0, lastAmp: 0, lastHit: -1 },
+    detB: { x: 0, y: 0, lastAmp: 0, lastHit: -1 },
+    bridge: { open: false, timer: 0, window: 0.25 },
+    lens: { x0: 0, y0: 0, x1: 0, y1: 0 }, // visual only
+    slit: { x: 0, gapY: 0, gapH: 2 }      // visual only
+  };
+
+  function placeWorld() {
+    Photon.pos.x = Math.floor(cols * 0.18);
+    Photon.pos.y = Math.floor(rows * 0.55);
+
+    World.polarizer.x = Math.floor(cols * 0.46);
+    World.polarizer.y = Math.floor(rows * 0.70);
+    World.polarizer.axisAngle = 0.0; // horizontal pass
+    World.polarizer.open = false; World.polarizer.openTimer = 0; World.polarizer.lastAmp = 0;
+
+    World.doorPos.x = Math.floor(cols * 0.60);
+    World.doorPos.y = World.polarizer.y;
+
+    World.splitter.x = Math.floor(cols * 0.50);
+    World.splitter.y = Math.floor(rows * 0.30);
+
+    World.detA.x = Math.floor(cols * 0.76);
+    World.detA.y = Math.floor(rows * 0.20);
+    World.detA.lastAmp = 0; World.detA.lastHit = -1;
+    World.detB.x = Math.floor(cols * 0.76);
+    World.detB.y = Math.floor(rows * 0.40);
+    World.detB.lastAmp = 0; World.detB.lastHit = -1;
+
+    World.bridge.open = false; World.bridge.timer = 0;
+
+    World.lens.x0 = Math.floor(cols * 0.36);
+    World.lens.y0 = Math.floor(rows * 0.18);
+    World.lens.x1 = Math.floor(cols * 0.42);
+    World.lens.y1 = Math.floor(rows * 0.34);
+
+    World.slit.x = Math.floor(cols * 0.50);
+    World.slit.gapY = Math.floor(rows * 0.26);
+  }
+
+  fitCanvas();
+
+  // ---------- Wavefronts ----------
+  let waveIdSeq = 1;
+  class Wavefront {
+    constructor(segments, lambdaNm, tag="main") {
+      this.id = waveIdSeq++;
+      this.tag = tag;                 // "main" or "splitA/B"
+      this.segments = segments;       // array of {ax,ay,bx,by}
+      this.lambdaNm = lambdaNm;
+      this.t = 0;
+      this.life = 0.9;                // seconds
+      this.expand = 10.0;             // cells/sec
+      this.sigma = 0.6;               // ring thickness
+      this.omega = 7.5;               // stripe anim
+      this.splitMemo = new Set();     // remember split points
+    }
+    alive() { return this.t < this.life; }
+    step(dt) { this.t += dt; }
+    // Min distance from cell center to nearest segment
+    minDist(cx, cy) {
+      let min = 1e9;
+      for (let i = 0; i < this.segments.length; i++) {
+        const s = this.segments[i];
+        const dx = s.bx - s.ax, dy = s.by - s.ay;
+        const len2 = dx*dx + dy*dy + 1e-6;
+        const t = Math.max(0, Math.min(1, ((cx - s.ax)*dx + (cy - s.ay)*dy) / len2));
+        const px = s.ax + t*dx, py = s.ay + t*dy;
+        const d = Math.hypot(cx - px, cy - py);
+        if (d < min) min = d;
+      }
+      return min;
+    }
+    sample(cx, cy) {
+      const s = Photon.speedScale(this.lambdaNm);
+      const w = this.expand * s * this.t;
+      const d = this.minDist(cx, cy);
+      // Local visual-only "lens": squeeze stripes inside lens rectangle
+      let sigma = this.sigma;
+      if (cx >= World.lens.x0 && cx < World.lens.x1 && cy >= World.lens.y0 && cy < World.lens.y1) {
+        sigma *= 0.35;
+      }
+      const g = Math.exp(-((d - w)*(d - w)) / (2 * sigma * sigma));
+      const env = Math.max(0, 1 - (this.t / this.life));
+      const stripes = 0.6 + 0.4 * Math.sin((w - d) * 4.2 - this.t * this.omega);
+      return g * env * stripes;
+    }
+    // Check if this wavefront should split at a given cell
+    trySplitAt(cellX, cellY) {
+      const key = cellX + "," + cellY;
+      if (this.splitMemo.has(key)) return [];
+      const amp = this.sample(cellX + 0.5, cellY + 0.5);
+      if (amp >= 0.65) {
+        this.splitMemo.add(key);
+        const sx = cellX + 0.5, sy = cellY + 0.5;
+        // Create two children: to detA and detB
+        const a = { ax: sx, ay: sy, bx: World.detA.x + 0.5, by: World.detA.y + 0.5 };
+        const b = { ax: sx, ay: sy, bx: World.detB.x + 0.5, by: World.detB.y + 0.5 };
+        return [
+          new Wavefront([a], this.lambdaNm, "splitA"),
+          new Wavefront([b], this.lambdaNm, "splitB")
+        ];
+      }
+      return [];
+    }
+  }
+
+  const wavefronts = [];
+
+  // Bresenham line between two grid points
+  function bresenham(ax, ay, bx, by) {
+    const points = [];
+    let x0 = ax|0, y0 = ay|0, x1 = bx|0, y1 = by|0;
+    const dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    const dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    let err = dx + dy;
+    while (true) {
+      points.push({x:x0, y:y0});
+      if (x0 === x1 && y0 === y1) break;
+      const e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x0 += sx; }
+      if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+    return points;
+  }
+
+  function pointsToSegments(pts) {
+    const segs = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i+1];
+      if (a.x === b.x && a.y === b.y) continue;
+      segs.push({ ax:a.x+0.5, ay:a.y+0.5, bx:b.x+0.5, by:b.y+0.5 });
+    }
+    return segs;
+  }
+
+  // ---------- Input ----------
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const gx = Math.max(0, Math.min(cols-1, Math.floor((e.clientX - rect.left) / cellW)));
+    const gy = Math.max(0, Math.min(rows-1, Math.floor((e.clientY - rect.top) / cellH)));
+    const path = bresenham(Photon.pos.x, Photon.pos.y, gx, gy);
+    const segs = pointsToSegments(path);
+    if (segs.length > 0) {
+      Photon.pos.x = gx; Photon.pos.y = gy; // instant blink
+      wavefronts.push(new Wavefront(segs, Photon.lambdaNm, "main"));
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === '1') Photon.lambdaNm = 700;
+    else if (e.key === '2') Photon.lambdaNm = 600;
+    else if (e.key === '3') Photon.lambdaNm = 500;
+    else if (e.key === '4') Photon.lambdaNm = 400;
+    else if (e.key === '5') Photon.lambdaNm = 320;
+    else if (e.key === '[') Photon.polAngle -= Math.PI/12;
+    else if (e.key === ']') Photon.polAngle += Math.PI/12;
+    else if (e.key.toLowerCase() === 'c') wavefronts.length = 0;
+    else if (e.key.toLowerCase() === 'r') { placeWorld(); wavefronts.length = 0; }
+  });
+
+  // ---------- Helpers ----------
+  function wavelengthToColor(nm) {
+    const x = Math.min(1, Math.max(0, (nm - 380) / (700 - 380)));
+    const hue = (1 - x) * 270;
+    const s = 0.65, v = 1.0;
+    const c = v * s;
+    const h = hue / 60;
+    const xcol = c * (1 - Math.abs((h % 2) - 1));
+    let r=0,g=0,b=0;
+    if (0<=h && h<1){ r=c; g=xcol; b=0; }
+    else if (1<=h && h<2){ r=xcol; g=c; b=0; }
+    else if (2<=h && h<3){ r=0; g=c; b=xcol; }
+    else if (3<=h && h<4){ r=0; g=xcol; b=c; }
+    else if (4<=h && h<5){ r=xcol; g=0; b=c; }
+    else { r=c; g=0; b=xcol; }
+    const m = v - c;
+    return { r: Math.round((r+m)*255), g: Math.round((g+m)*255), b: Math.round((b+m)*255) };
+  }
+
+  function drawText(x, y, str, rgba) {
+    ctx.fillStyle = rgba;
+    ctx.fillText(str, x*cellW, y*cellH);
+  }
+
+  function polAscii(angle) {
+    const a = ((angle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+    const oct = Math.round(a / (Math.PI/4)) % 8;
+    // 0:→ 1:↗ 2:↑ 3:↖ 4:← 5:↙ 6:↓ 7:↘ using ascii-ish
+    return ['-','/','|','\\','-','/','|','\\'][oct];
+  }
+
+  function malusTransmission(polAngle, axisAngle) {
+    const c = Math.cos(polAngle - axisAngle);
+    return c * c;
+  }
+
+  // ---------- Main loop ----------
+  let prev = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.033, (now - prev) / 1000);
+    prev = now;
+
+    // Step wavefronts and cull
+    for (let i = wavefronts.length - 1; i >= 0; i--) {
+      const wf = wavefronts[i];
+      wf.step(dt);
+      if (!wf.alive()) wavefronts.splice(i, 1);
+    }
+
+    // Clear
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Tint
+    const tint = wavelengthToColor(Photon.lambdaNm);
+    const tintRGBA = (a=1)=>`rgba(${tint.r},${tint.g},${tint.b},${a})`;
+
+    // ---------- Visual world: lens + slit ----------
+    // Lens rectangle
+    ctx.fillStyle = 'rgba(120,180,255,0.10)';
+    const lr = World.lens;
+    ctx.fillRect(lr.x0*cellW, lr.y0*cellH, (lr.x1-lr.x0)*cellW, (lr.y1-lr.y0)*cellH);
+    drawText(lr.x0, lr.y0-1, "[lens]", "rgba(150,200,255,0.5)");
+
+    // Slit barrier (visual only)
+    ctx.fillStyle = 'rgba(90,120,180,0.35)';
+    for (let y = 0; y < rows; y++) {
+      if (y >= World.slit.gapY && y < World.slit.gapY + World.slit.gapH) continue;
+      ctx.fillText('|', World.slit.x*cellW, y*cellH);
+    }
+    drawText(World.slit.x-1, World.slit.gapY-1, "slit", "rgba(120,160,220,0.6)");
+
+    // ---------- Sample amplitude at special cells ----------
+    function sampleAt(x, y) {
+      const cx = x + 0.5, cy = y + 0.5;
+      let amp = 0;
+      for (let i = 0; i < wavefronts.length; i++) amp = Math.max(amp, wavefronts[i].sample(cx, cy));
+      return amp;
+    }
+
+    // Splitter behavior: try to split any wavefront at the splitter cell
+    for (let i = 0; i < wavefronts.length; i++) {
+      const wf = wavefronts[i];
+      const kids = wf.trySplitAt(World.splitter.x, World.splitter.y);
+      for (const child of kids) wavefronts.push(child);
+    }
+
+    // Polarizer gate logic (Malus)
+    const polAmp = sampleAt(World.polarizer.x, World.polarizer.y);
+    const T = malusTransmission(Photon.polAngle, World.polarizer.axisAngle);
+    const eff = polAmp * T;
+    // Rising edge opens the door briefly
+    if (eff >= World.polarizer.threshold && World.polarizer.lastAmp < World.polarizer.threshold) {
+      World.polarizer.open = true;
+      World.polarizer.openTimer = 0.9; // seconds
+    }
+    World.polarizer.lastAmp = eff;
+    if (World.polarizer.open) {
+      World.polarizer.openTimer -= dt;
+      if (World.polarizer.openTimer <= 0) World.polarizer.open = false;
+    }
+
+    // Detectors A/B logic
+    const ampA = sampleAt(World.detA.x, World.detA.y);
+    const ampB = sampleAt(World.detB.x, World.detB.y);
+    const thDet = 0.6;
+    const tNow = performance.now() / 1000;
+    if (ampA >= thDet && World.detA.lastAmp < thDet) World.detA.lastHit = tNow;
+    if (ampB >= thDet && World.detB.lastAmp < thDet) World.detB.lastHit = tNow;
+    World.detA.lastAmp = ampA; World.detB.lastAmp = ampB;
+    // Bridge opens if both hits are within Δt
+    if (World.detA.lastHit > 0 && World.detB.lastHit > 0 &&
+        Math.abs(World.detA.lastHit - World.detB.lastHit) <= World.bridge.window) {
+      World.bridge.open = true;
+      World.bridge.timer = 1.2;
+      World.detA.lastHit = -1; World.detB.lastHit = -1; // consume
+    }
+    if (World.bridge.open) {
+      World.bridge.timer -= dt;
+      if (World.bridge.timer <= 0) World.bridge.open = false;
+    }
+
+    // ---------- Draw wavefront ASCII field ----------
+    const ramp = " .:-=+*#%@";
+    const rampLen = ramp.length;
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        // Photon
+        if (x === Photon.pos.x && y === Photon.pos.y) {
+          ctx.fillStyle = tintRGBA(1);
+          ctx.fillText('@', x*cellW, y*cellH);
+          // polarization indicator next to photon
+          ctx.fillStyle = tintRGBA(0.9);
+          ctx.fillText(polAscii(Photon.polAngle), (x+1)*cellW, y*cellH);
+          continue;
+        }
+        // Wavefront amplitude
+        let amp = 0;
+        if (wavefronts.length) {
+          const cx = x + 0.5, cy = y + 0.5;
+          for (let i = 0; i < wavefronts.length; i++) {
+            amp = Math.max(amp, wavefronts[i].sample(cx, cy));
+          }
+        }
+        if (amp > 0.08) {
+          const idx = Math.min(rampLen - 1, Math.max(0, Math.floor(amp * (rampLen - 1))));
+          ctx.fillStyle = tintRGBA(Math.min(1, 0.25 + amp * 0.9));
+          ctx.fillText(ramp[idx], x*cellW, y*cellH);
+        }
+      }
+    }
+
+    // ---------- Draw special elements & statuses ----------
+    // Splitter
+    drawText(World.splitter.x, World.splitter.y, "X", "rgba(180,220,255,0.9)");
+    drawText(World.splitter.x-2, World.splitter.y-1, "[splitter]", "rgba(150,200,255,0.6)");
+
+    // Detectors
+    drawText(World.detA.x, World.detA.y, "D", ampA>=thDet ? "rgba(120,255,150,0.95)" : "rgba(120,180,120,0.7)");
+    drawText(World.detB.x, World.detB.y, "D", ampB>=thDet ? "rgba(120,255,150,0.95)" : "rgba(120,180,120,0.7)");
+    drawText(World.detA.x-2, World.detA.y-1, "det A", "rgba(140,200,160,0.7)");
+    drawText(World.detB.x-2, World.detB.y-1, "det B", "rgba(140,200,160,0.7)");
+
+    // Bridge status
+    const bx = Math.floor((World.detA.x + World.detB.x)/2);
+    const by = Math.floor((World.detA.y + World.detB.y)/2);
+    drawText(bx-3, by, World.bridge.open ? "[BRIDGE OPEN]" : "[bridge closed]", World.bridge.open ? "rgba(120,255,150,0.95)" : "rgba(120,180,120,0.6)");
+
+    // Polarizer gate
+    const polChar = polAscii(World.polarizer.axisAngle);
+    drawText(World.polarizer.x, World.polarizer.y, polChar.repeat(3), "rgba(200,220,255,0.85)");
+    drawText(World.polarizer.x-3, World.polarizer.y-1, "polarizer", "rgba(150,200,255,0.6)");
+    // Door after polarizer
+    drawText(World.doorPos.x-1, World.doorPos.y, World.polarizer.open ? "[OPEN]" : "[closed]", World.polarizer.open ? "rgba(120,255,150,0.95)" : "rgba(180,120,120,0.7)");
+
+    // HUD mini readout
+    const s = Photon.speedScale(Photon.lambdaNm).toFixed(2);
+    const nm = Math.round(Photon.lambdaNm);
+    const deg = ((Photon.polAngle*180/Math.PI)%360+360)%360;
+    drawText(1, 1, `λ=${nm} nm  speed×${s}  pol=${deg.toFixed(0)}°`, "rgba(180,220,255,0.8)");
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Photon — v0.9.1 Detectors + Samples</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; color:#cfe9ff; height:100%; }
+  #wrap { display:flex; flex-direction:column; height:100%; }
+  #ui { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size:14px; line-height:1.35; padding:8px 10px; color:#bfe3ff; background:#0b1016; border-bottom:1px solid #0f1926; }
+  #ui code { color:#ffe08a; }
+  #c { flex: 1 1 auto; display:block; width:100%; height:100%; background:#000; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="ui">
+    <strong>ASCII Photon — v0.9.1 Detectors + Samples</strong>
+    — Move <b>WASD</b> (accel), aim mouse, fire <b>Space/Click</b> (hold stream). <code>T</code> auto. Fire rate <code>[</code>/<code>]</code>. 
+    Obstacles: walls <b>#</b>, mirrors <b>/ \</b>, absorbers <b>X</b>. <b>D</b> detector, <b>S</b> sample cuvette. <code>M</code> map on/off.
+  </div>
+  <canvas id="c"></canvas>
+</div>
+
+<script>
+(() => {
+  // ===== Canvas =====
+  const cellW=12, cellH=20; let cols=100, rows=44;
+  const canvas=document.getElementById('c'); const ctx=canvas.getContext('2d');
+  ctx.imageSmoothingEnabled=false; ctx.textBaseline='top'; ctx.font='18px Courier New, monospace';
+  function fit(){ const W=window.innerWidth, H=window.innerHeight-document.getElementById('ui').offsetHeight;
+    cols=Math.max(60,Math.floor(W/cellW)); rows=Math.max(30,Math.floor(H/cellH)); canvas.width=cols*cellW; canvas.height=rows*cellH; }
+  window.addEventListener('resize', ()=>{ fit(); center(); }); fit();
+
+  // ===== Utils =====
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const randRange=(a,b)=>a + Math.random()*(b-a);
+  function w2rgb(nm){ const n=clamp(nm,200,800), x=Math.min(1, Math.max(0, (n-380)/(700-380)));
+    const hue=(1-x)*270, s=.65,v=1,c=v*s,h=hue/60,xcol=c*(1-Math.abs((h%2)-1)); let r=0,g=0,b=0;
+    if(0<=h&&h<1){r=c;g=xcol;} else if(1<=h&&h<2){r=xcol;g=c;} else if(2<=h&&h<3){g=c;b=xcol;}
+    else if(3<=h&&h<4){g=xcol;b=c;} else if(4<=h&&h<5){r=xcol;b=c;} else {r=c;b=xcol;}
+    const m=v-c; return {r:Math.round((r+m)*255),g:Math.round((g+m)*255),b:Math.round((b+m)*255)}; }
+  const ramp=" .:-=+*#@%"; const rampLen=ramp.length;
+
+  // ===== Game =====
+  const Game={ time:0, state:'playing', photons:[], emits:[], molecules:[], tiles:[], detectors:[], samples:[] };
+  const P={ x:Math.floor(cols*0.5), y:Math.floor(rows*0.6), vx:0, vy:0, ang:0, aimLocked:false,
+            λ:520, move:26, accel:120, friction:90, sprintK:1.45, precisionK:0.45,
+            fireHeld:false, latched:false, rate:28, cd:0, drain:true, batMax:100, bat:100, rech:10 };
+  function center(){ P.x=Math.floor(cols*0.5); P.y=Math.floor(rows*0.6); P.vx=P.vy=0; }
+
+  // ===== Input =====
+  const K=new Set();
+  window.addEventListener('keydown',e=>{
+    K.add(e.key);
+    if(e.key===' '){ fireSingle(); P.fireHeld=true; e.preventDefault(); }
+    if(e.key==='t'||e.key==='T') P.latched=!P.latched;
+    if(e.key==='g'||e.key==='G') P.drain=!P.drain;
+    if(e.key==='1') P.λ=700; if(e.key==='2') P.λ=600; if(e.key==='3') P.λ=520; if(e.key==='4') P.λ=450; if(e.key==='5') P.λ=380;
+    if(e.key==='-'||e.key==='_') P.λ=clamp(P.λ+5,200,800);
+    if(e.key==='='||e.key==='+') P.λ=clamp(P.λ-5,200,800);
+    if(e.key==='[') P.rate=clamp(P.rate-2,6,60);
+    if(e.key===']') P.rate=clamp(P.rate+2,6,60);
+    if(e.key==='m'||e.key==='M') showMap=!showMap;
+    if(e.key==='l'||e.key==='L') P.aimLocked=!P.aimLocked;
+    if(e.key==='c'||e.key==='C') center();
+    if(e.key==='d'||e.key==='D') debug=!debug;
+  });
+  window.addEventListener('keyup',e=>{ K.delete(e.key); if(e.key===' ') P.fireHeld=false; });
+  let mouse={x:0,y:0};
+  canvas.addEventListener('mousemove',e=>{ const r=canvas.getBoundingClientRect();
+    mouse.x=Math.floor((e.clientX-r.left)/cellW); mouse.y=Math.floor((e.clientY-r.top)/cellH);
+    if(!P.aimLocked){ const ax=mouse.x-P.x, ay=mouse.y-P.y; if(ax||ay) P.ang=Math.atan2(ay,ax); }
+  });
+  canvas.addEventListener('contextmenu',e=>{ e.preventDefault(); P.aimLocked=!P.aimLocked; });
+  canvas.addEventListener('mousedown',()=>{ fireToward(mouse.x,mouse.y); P.fireHeld=true; });
+  window.addEventListener('mouseup',()=>{ P.fireHeld=false; });
+  canvas.addEventListener('click',()=>{ fireToward(mouse.x,mouse.y); });
+
+  // ===== Movement =====
+  function isBlocked(ix,iy){ if(ix<1||iy<1||ix>=cols-1||iy>=rows-1) return true; const t=tileAt(ix,iy); return t&&(t.kind==='wall'||t.kind==='absorber'); }
+  function move(dt){
+    let ax=0,ay=0; if(K.has('w')||K.has('W')) ay-=1; if(K.has('s')||K.has('S')) ay+=1; if(K.has('a')||K.has('A')) ax-=1; if(K.has('d')||K.has('D')) ax+=1;
+    let mult=1; if(K.has('Shift')) mult*=P.sprintK; if(K.has('Control')) mult*=P.precisionK;
+    if(ax||ay){ const n=Math.hypot(ax,ay)||1; P.vx += (ax/n)*P.accel*dt; P.vy += (ay/n)*P.accel*dt;
+      const vmag=Math.hypot(P.vx,P.vy), vmax=P.move*mult; if(vmag>vmax){ P.vx=P.vx/vmag*vmax; P.vy=P.vy/vmag*vmax; } }
+    else { const vmag=Math.hypot(P.vx,P.vy), dec=P.friction*dt; if(vmag<=dec){ P.vx=P.vy=0; } else { P.vx-=P.vx/vmag*dec; P.vy-=P.vy/vmag*dec; } }
+    let nx=clamp(P.x+P.vx*dt,1,cols-2), ny=clamp(P.y+P.vy*dt,1,rows-2);
+    if(isBlocked(Math.round(nx), Math.round(P.y))){ nx=P.x; P.vx=0; }
+    if(isBlocked(Math.round(P.x), Math.round(ny))){ ny=P.y; P.vy=0; }
+    if(isBlocked(Math.round(nx), Math.round(ny))){ nx=P.x; ny=P.y; P.vx=P.vy=0; }
+    P.x=nx; P.y=ny;
+  }
+
+  // ===== Tiles / Map =====
+  let showMap=true, debug=false;
+  function tileAt(ix,iy){ return Game.tiles.find(t=>t.x===ix && t.y===iy) || Game.detectors.find(d=>d.x===ix&&d.y===iy) || Game.samples.find(s=>s.x===ix&&s.y===iy) || null; }
+  function addTile(x,y,kind){ Game.tiles.push({x,y,kind}); }
+  function addDetector(x,y,label,window){ const rec={x,y,kind:'detector',label,window,counts:0,countsByNm:[], recent:[]}; Game.detectors.push(rec); }
+  function addSample(x,y,peaks){ // peaks: [{nm, sigma, strength, fluoresce:{shift, prob}}]
+    Game.samples.push({x,y,kind:'sample', peaks});
+  }
+  function makeMap(){
+    Game.tiles.length=0; Game.detectors.length=0; Game.samples.length=0;
+    // borders
+    for(let x=0;x<cols;x++){ addTile(x,0,'wall'); addTile(x,rows-1,'wall'); }
+    for(let y=0;y<rows;y++){ addTile(0,y,'wall'); addTile(cols-1,y,'wall'); }
+    // corridor mid
+    for(let x=12;x<cols-12;x+=2){ addTile(x,Math.floor(rows*0.4),'wall'); }
+    // mirrors sprinkled
+    for(let i=0;i<10;i++){ const x=Math.floor(randRange(6,cols-6)), y=Math.floor(randRange(6,rows-6)); addTile(x,y, (i%2)?'mirrorSlash':'mirrorBack'); }
+    // absorbers in corners
+    addTile(5,5,'absorber'); addTile(cols-6,5,'absorber'); addTile(5,rows-6,'absorber'); addTile(cols-6,rows-6,'absorber');
+    // detector on the right
+    addDetector(cols-8, Math.floor(rows*0.6), 'DET-A', {nmMin:500, nmMax:540});
+    // sample near center
+    addSample(Math.floor(cols*0.6), Math.floor(rows*0.6), [
+      {nm:520, sigma:18, strength:1.0, fluoresce:{shift:60, prob:0.25}},
+      {nm:450, sigma:14, strength:0.6, fluoresce:{shift:50, prob:0.15}}
+    ]);
+  }
+  makeMap();
+
+  function drawMap(){
+    if(!showMap) return;
+    for(const t of Game.tiles){
+      if(t.kind==='wall'){ ctx.fillStyle='rgba(70,110,150,0.85)'; ctx.fillText('#', t.x*cellW, t.y*cellH); }
+      else if(t.kind==='mirrorSlash'){ ctx.fillStyle='rgba(120,230,255,0.9)'; ctx.fillText('/', t.x*cellW, t.y*cellH); }
+      else if(t.kind==='mirrorBack'){ ctx.fillStyle='rgba(120,230,255,0.9)'; ctx.fillText('\\', t.x*cellW, t.y*cellH); }
+      else if(t.kind==='absorber'){ ctx.fillStyle='rgba(255,120,120,0.95)'; ctx.fillText('X', t.x*cellW, t.y*cellH); }
+    }
+    for(const d of Game.detectors){ ctx.fillStyle='rgba(255,255,120,0.95)'; ctx.fillText('D', d.x*cellW, d.y*cellH); ctx.fillStyle='rgba(255,255,200,0.8)'; ctx.fillText(d.label, (d.x-1)*cellW, (d.y-1)*cellH); }
+    for(const s of Game.samples){ ctx.fillStyle='rgba(120,255,160,0.95)'; ctx.fillText('S', s.x*cellW, s.y*cellH); ctx.fillStyle='rgba(160,255,200,0.7)'; ctx.fillText('sample', (s.x-2)*cellW, (s.y-1)*cellH); }
+  }
+
+  // ===== Entities =====
+  class Photon{ constructor(x,y,a,nm){ this.x=x; this.y=y; this.px=x; this.py=y; const v=40; this.vx=Math.cos(a)*v; this.vy=Math.sin(a)*v; this.nm=nm; this.age=0; this.life=4; this.bounces=6; }
+    step(dt){ this.px=this.x; this.py=this.y; this.x+=this.vx*dt; this.y+=this.vy*dt; this.age+=dt; }
+    alive(){ return this.age<=this.life && this.x>=0&&this.x<cols&&this.y>=0&&this.y<rows && this.bounces>=0; } }
+  class Emission{ constructor(x,y,nm,amp=1){ this.x=x; this.y=y; this.nm=nm; this.t=0; this.life=1.2;
+      const L=clamp(nm,200,800), inv=1/L, invMin=1/800, invMax=1/200, k=1+0.7*((inv-invMax)/(invMin-invMax));
+      this.wave=14*k; this.rs=0.75; this.cs=0.5; this.gr=10; this.gk=0.35; this.amp=amp; }
+    step(dt){ this.t+=dt; } alive(){ return this.t<this.life; }
+    bb(cx,cy){ const r=Math.max(3,this.wave*this.t+4); return Math.abs(cx-this.x)<=r && Math.abs(cy-this.y)<=r; }
+    sample(cx,cy){ const dx=cx-this.x,dy=cy-this.y,d=Math.hypot(dx,dy), w=this.wave*this.t;
+      const ring=Math.exp(-((d-w)*(d-w))/(2*this.rs*this.rs)); const core=Math.exp(-(d*d)/(2*this.cs*this.cs)); const glow=this.gk*Math.exp(-d/this.gr);
+      const env=Math.max(0,1-(this.t/this.life)); const shim=0.75+0.25*Math.sin(this.t*7+d*2); return Math.min(1,(0.7*ring+0.6*core+glow)*env*shim)*this.amp; } }
+  const MOLECULES=[ {label:'A₂',Eb:3.0,len:5,sp:6}, {label:'H₂',Eb:4.5,len:5,sp:7}, {label:'O₂',Eb:5.1,len:6,sp:5.5}, {label:'CO',Eb:3.6,len:6,sp:6.5} ];
+  class Mol{ constructor(k,x,y,vx,vy){ this.k=k; this.cx=x; this.cy=y; this.vx=vx; this.vy=vy; this.a=Math.random()*Math.PI*2; this.av=(Math.random()-0.5)*0.6; this.len=k.len; this.emit=1240/Math.max(0.1,k.Eb); }
+    ends(){ const dx=Math.cos(this.a),dy=Math.sin(this.a); return {ax:this.cx-dx*this.len*.5, ay:this.cy-dy*this.len*.5, bx:this.cx+dx*this.len*.5, by:this.cy+dy*this.len*.5}; }
+    step(dt){ this.cx+=this.vx*dt; this.cy+=this.vy*dt; this.a+=this.av*dt; const ix=Math.round(this.cx), iy=Math.round(this.cy);
+      if(isBlocked(ix,iy)){ this.vx*=-1; this.vy*=-1; this.cx=clamp(this.cx,2,cols-3); this.cy=clamp(this.cy,2,rows-3); }
+      if(this.cx<2||this.cx>cols-3){ this.vx*=-1; this.cx=clamp(this.cx,2,cols-3);} if(this.cy<2||this.cy>rows-3){ this.vy*=-1; this.cy=clamp(this.cy,2,rows-3);} }
+    draw(){ const e=this.ends(),dx=e.bx-e.ax,dy=e.by-e.ay,steps=Math.max(2,Math.ceil(Math.hypot(dx,dy))); const c=w2rgb(this.emit);
+      ctx.fillStyle=`rgba(${c.r},${c.g},${c.b},0.35)`; for(let i=0;i<=steps;i++){ const x=Math.round(e.ax+dx*(i/steps)), y=Math.round(e.ay+dy*(i/steps)); if(x>=0&&x<cols&&y>=0&&y<rows) ctx.fillText('-', x*cellW, y*cellH); }
+      ctx.fillStyle='rgba(150,200,255,0.9)'; ctx.fillText('o', Math.round(e.ax)*cellW, Math.round(e.ay)*cellH); ctx.fillText('o', Math.round(e.bx)*cellW, Math.round(e.by)*cellH);
+      ctx.fillStyle='rgba(150,200,255,0.6)'; ctx.fillText(`${this.k.label}[${this.k.Eb.toFixed(1)}eV]`, Math.round(this.cx-2)*cellW, Math.round(this.cy-2)*cellH); } }
+
+  // ===== Map init =====
+  function spawnMolecules(n=6){ Game.molecules.length=0; for(let i=0;i<n;i++){ const k=MOLECULES[Math.floor(Math.random()*MOLECULES.length)];
+      let x=0,y=0,tries=0; do{ x=Math.floor(randRange(5,cols-5)); y=Math.floor(randRange(4,rows-4)); tries++; } while(isBlocked(x,y)&&tries<100);
+      const ang=Math.random()*Math.PI*2, sp=k.sp*(0.7+0.6*Math.random()); Game.molecules.push(new Mol(k,x,y,Math.cos(ang)*sp,Math.sin(ang)*sp)); } }
+  spawnMolecules(8);
+
+  // ===== Photon vs Tiles =====
+  function reflectWall(p,cellx,celly){
+    const cx=cellx+0.5, cy=celly+0.5, dx=p.x-cx, dy=p.y-cy;
+    if(Math.abs(dx)>Math.abs(dy)){ p.vx*=-1; } else { p.vy*=-1; } p.bounces--;
+  }
+  function reflectMirror(p, kind){
+    const vx=p.vx, vy=p.vy;
+    if(kind==='mirrorSlash'){ p.vx = -vy; p.vy = -vx; } else { p.vx = vy; p.vy = vx; } p.bounces--;
+  }
+
+  function gaussian(x, mu, sigma){ const d=x-mu; return Math.exp(-(d*d)/(2*sigma*sigma)); }
+  function sampleAbsorbProb(sample, nm){
+    // Sum of peaks
+    let a=0; for(const pk of sample.peaks){ a += pk.strength * gaussian(nm, pk.nm, pk.sigma); }
+    // Clamp to [0, 0.8] per tile pass
+    return Math.min(0.8, a);
+  }
+
+  function photonTileStep(p){
+    const steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.x-p.px), Math.abs(p.y-p.py))));
+    for(let i=1;i<=steps;i++){
+      const sx=p.px+(p.x-p.px)*(i/steps), sy=p.py+(p.y-p.py)*(i/steps), ix=Math.round(sx), iy=Math.round(sy);
+      const t = tileAt(ix,iy); if(!t) continue;
+      if(t.kind==='wall'){ reflectWall(p,ix,iy); Game.emits.push(new Emission(ix,iy,p.nm,0.15)); p.x=p.px; p.y=p.py; return false; }
+      if(t.kind==='mirrorSlash'||t.kind==='mirrorBack'){ reflectMirror(p,t.kind); Game.emits.push(new Emission(ix,iy,p.nm,0.1)); p.x=sx; p.y=sy; return false; }
+      if(t.kind==='absorber'){ Game.emits.push(new Emission(ix,iy,p.nm,0.25)); return true; }
+      if(t.kind==='detector'){
+        // Count if within passband
+        const pass = (!t.window) || (p.nm>=t.window.nmMin && p.nm<=t.window.nmMax);
+        if(pass){
+          t.counts++; t.recent.push({t:Game.time, nm:p.nm}); const bin=Math.round(p.nm); t.countsByNm[bin]=(t.countsByNm[bin]||0)+1;
+          Game.emits.push(new Emission(ix,iy,p.nm,0.22));
+        } else {
+          Game.emits.push(new Emission(ix,iy,p.nm,0.08));
+        }
+        return true;
+      }
+      if(t.kind==='sample'){
+        const prob = sampleAbsorbProb(t, p.nm);
+        if (Math.random()<prob){
+          // absorbed; maybe fluoresce at longer λ
+          const pk = t.peaks.reduce((best,c)=> (Math.abs(c.nm - p.nm) < Math.abs(best.nm - p.nm) ? c : best), t.peaks[0]);
+          if (pk.fluoresce && Math.random()<pk.fluoresce.prob){
+            const out = clamp(pk.nm + pk.fluoresce.shift, 300, 800);
+            Game.emits.push(new Emission(ix,iy,out,0.9));
+          } else {
+            Game.emits.push(new Emission(ix,iy,p.nm,0.35));
+          }
+          return true; // photon consumed
+        } else {
+          // slight attenuation trail
+          Game.emits.push(new Emission(ix,iy,p.nm,0.08));
+          // keep going
+          return false;
+        }
+      }
+    }
+    return false;
+  }
+
+  // ===== Interaction =====
+  function shotCost(nm){ const inv=1/clamp(nm,200,800), t=(inv-(1/800))/((1/200)-(1/800)); return 0.14+0.85*clamp(t,0,1); }
+  function fireSingle(){ if(P.drain && P.bat<=0) return; Game.photons.push(new Photon(P.x,P.y,P.ang,P.λ)); while(Game.photons.length>160) Game.photons.shift(); if(P.drain) P.bat=Math.max(0,P.bat-shotCost(P.λ)); }
+  function fireToward(cx,cy){ const a=Math.atan2(cy-P.y, cx-P.x); Game.photons.push(new Photon(P.x,P.y,a,P.λ)); while(Game.photons.length>160) Game.photons.shift(); if(P.drain) P.bat=Math.max(0,P.bat-shotCost(P.λ)); }
+
+  // ===== Mission: Deliver counts + Estimate peak =====
+  const Mission = {
+    name: 'Calibrate Green Channel',
+    desc: 'Send photons through the sample to DET-A. Deliver counts in 500–540 nm and estimate the sample peak.',
+    targetCounts: 120,
+    window: {min:500, max:540},
+    estimateTolNm: 15,
+    complete:false, peakEstimate:null, estimated:false
+  };
+  function updatePeakEstimate(det){
+    // Weighted mean of nm from recent hits in window
+    const recent = det.recent.filter(h=> h.nm>=Mission.window.min && h.nm<=Mission.window.max);
+    if (recent.length<20) return null;
+    const sumW = recent.length, sum = recent.reduce((a,h)=>a+h.nm,0);
+    return sum / sumW;
+  }
+  function cleanDetector(det){
+    // drop hits older than 6s from recent list
+    const cutoff = Game.time - 6;
+    det.recent = det.recent.filter(h=> h.t>=cutoff);
+  }
+
+  // ===== Loop =====
+  let prev=performance.now();
+  function frame(now){
+    const dt=Math.min(0.033,(now-prev)/1000); prev=now; Game.time+=dt;
+
+    // movement
+    move(dt);
+
+    // firing
+    const firing=(P.fireHeld||P.latched)&&(P.drain?P.bat>0:true);
+    P.cd-=dt; if(firing && P.cd<=0){ fireSingle(); P.cd=1/P.rate; }
+    if(!firing && P.drain){ P.bat=Math.min(P.batMax, P.bat+P.rech*dt); }
+
+    // step photons
+    for(let i=Game.photons.length-1;i>=0;i--){ const p=Game.photons[i]; p.step(dt); const kill=photonTileStep(p);
+      // molecules interaction (kept simple)
+      for (let j=Game.molecules.length-1;j>=0 && !kill;j--){
+        const m=Game.molecules[j], e=m.ends();
+        // simple center hit check
+        const dx=(e.ax+e.bx)/2 - p.x, dy=(e.ay+e.by)/2 - p.y; if (Math.hypot(dx,dy) < 1.0){ Game.emits.push(new Emission(m.cx,m.cy,p.nm,0.25)); Game.molecules.splice(j,1); }
+      }
+      if(kill || !p.alive()) Game.photons.splice(i,1);
+    }
+    // step emissions
+    for(let i=Game.emits.length-1;i>=0;i--){ const e=Game.emits[i]; e.step(dt); if(!e.alive()) Game.emits.splice(i,1); }
+    // step molecules
+    for(const m of Game.molecules) m.step(dt);
+
+    // Detector maintenance + mission
+    for (const d of Game.detectors){ cleanDetector(d); }
+    const det = Game.detectors[0];
+    if (det){
+      const recentWindow = det.recent.filter(h=> h.nm>=Mission.window.min && h.nm<=Mission.window.max);
+      const delivered = recentWindow.length;
+      const est = updatePeakEstimate(det);
+      if (est){ Mission.peakEstimate = est; Mission.estimated = true; }
+      if (delivered >= Mission.targetCounts && Mission.estimated) Mission.complete = true;
+    }
+
+    // draw
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // emission field
+    const tint=w2rgb(P.λ); const rgba=(a=1)=>`rgba(${tint.r},${tint.g},${tint.b},${a})`;
+    for(let y=0;y<rows;y++){ for(let x=0;x<cols;x++){ let amp=0; const cx=x+0.5, cy=y+0.5;
+      for(const e of Game.emits){ if(e.bb(cx,cy)) amp=Math.max(amp, e.sample(cx,cy)); }
+      if(amp>0.06){ const idx=Math.min(rampLen-1, Math.max(0, Math.floor(amp*(rampLen-1)))); ctx.fillStyle=rgba(Math.min(1,0.18+amp*0.95)); ctx.fillText(ramp[idx], x*cellW, y*cellH); } } }
+
+    // map + molecules
+    drawMap();
+    for(const m of Game.molecules) m.draw();
+
+    // aim dots
+    const dx=Math.cos(P.ang), dy=Math.sin(P.ang); ctx.fillStyle='rgba(255,255,255,0.28)';
+    for(let i=1;i<cols*0.8;i+=2){ const nx=Math.round(P.x+dx*i), ny=Math.round(P.y+dy*i); if(nx<1||nx>=cols-1||ny<1||ny>=rows-1) break; ctx.fillText('.', nx*cellW, ny*cellH); }
+
+    // photons
+    for(const p of Game.photons){ ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.fillText('*', Math.round(p.x)*cellW, Math.round(p.y)*cellH); }
+
+    // player marker
+    drawPlayer();
+
+    // HUD left
+    function txt(x,y,s,a){ ctx.fillStyle=a; ctx.fillText(s,x*cellW,y*cellH); }
+    const nm=Math.round(P.λ), E=(1240/Math.max(1,nm)).toFixed(2), bar=Math.floor((P.bat/P.batMax)*20);
+    txt(1,1,`λ=${nm} nm  E=${E} eV  move: WASD (accel)  aim: mouse  lock: RMB/L  fire: Space/Click  RoF=${P.rate}/s`, 'rgba(180,220,255,0.9)');
+    txt(1,2,`battery [${'#'.repeat(bar)}${'.'.repeat(20-bar)}] ${Math.max(0,Math.round(P.bat))}/${P.batMax}   photons:${Game.photons.length}  emits:${Game.emits.length}`, 'rgba(160,200,255,0.85)');
+
+    // Goals panel right
+    drawGoalsPanel(det);
+
+    requestAnimationFrame(frame);
+  }
+
+  function drawPlayer(){
+    const ex=Math.round(P.x), ey=Math.round(P.y);
+    ctx.strokeStyle='rgba(0,255,180,0.85)'; ctx.lineWidth=cellW*0.8;
+    ctx.beginPath(); ctx.moveTo((ex-1.2)*cellW,(ey)*cellH+cellH/2); ctx.lineTo((ex+1.2)*cellW,(ey)*cellH+cellH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo((ex)*cellW+cellW/2,(ey-1.2)*cellH); ctx.lineTo((ex)*cellW+cellW/2,(ey+1.2)*cellH); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.96)'; ctx.fillRect(ex*cellW, ey*cellH, cellW, cellH);
+    ctx.fillStyle='rgba(0,0,0,0.9)'; ctx.fillText('@', ex*cellW, ey*cellH);
+    ctx.fillStyle='rgba(255,255,255,0.98)'; ctx.fillText('YOU', Math.max(0,ex-1)*cellW, Math.max(0,ey-2)*cellH);
+  }
+
+  function drawGoalsPanel(det){
+    const lines=[];
+    lines.push(`MISSION: ${Mission.name}`);
+    lines.push(Mission.desc);
+    if (det){
+      const delivered = det.recent.filter(h=> h.nm>=Mission.window.min && h.nm<=Mission.window.max).length;
+      lines.push(`Deliver counts in ${Mission.window.min}-${Mission.window.max} nm: ${Math.min(delivered, Mission.targetCounts)}/${Mission.targetCounts}`);
+      const est = Mission.peakEstimate ? Mission.peakEstimate.toFixed(1) : '—';
+      const truePk = 520; // hidden ground truth from sample peaks for this mission
+      const off = Mission.peakEstimate ? Math.abs(Mission.peakEstimate - truePk).toFixed(1) : '—';
+      lines.push(`Estimate sample peak: ~${est} nm (|Δ|=${off} nm, tol±${Mission.estimateTolNm})`);
+      if (Mission.complete) lines.push(`Status: ✓ CALIBRATED`); else lines.push(`Status: in progress`);
+      // Tiny histogram across window
+      const bins=8, width=Mission.window.max - Mission.window.min, step=width/bins;
+      let bar=''; for(let i=0;i<bins;i++){ const lo=Math.round(Mission.window.min+i*step), hi=Math.round(lo+step);
+        let c=0; for(let nm=lo; nm<=hi; nm++){ c += det.countsByNm[nm]||0; }
+        const lvl=Math.min(9, Math.floor(c/8)); bar += " ▁▂▃▄▅▆▇██"[lvl]; }
+      lines.push(`Spectrum: ${bar}`);
+    }
+    const w=Math.max(...lines.map(s=>s.length))+4, h=lines.length+2;
+    const x=Math.max(1, cols - w - 2), y=1;
+    ctx.fillStyle='rgba(15,25,35,0.9)'; ctx.fillRect(x*cellW, y*cellH, w*cellW, h*cellH);
+    ctx.fillStyle='rgba(255,255,255,0.75)';
+    for(let i=0;i<w;i++){ ctx.fillText('-', (x+i)*cellW, y*cellH); ctx.fillText('-', (x+i)*cellW, (y+h-1)*cellH); }
+    for(let j=0;j<h;j++){ ctx.fillText('|', x*cellW, (y+j)*cellH); ctx.fillText('|', (x+w-1)*cellW, (y+j)*cellH); }
+    lines.forEach((s,i)=> ctx.fillText(s, (x+2)*cellW, (y+1+i)*cellH));
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

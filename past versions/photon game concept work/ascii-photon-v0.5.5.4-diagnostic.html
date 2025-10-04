@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Photon — v0.5.5.4 Diagnostic (Where Is Everything)</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; color:#cfe9ff; height:100%; }
+  #wrap { display:flex; flex-direction:column; height:100%; }
+  #ui { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size:14px; line-height:1.35; padding:8px 10px; color:#bfe3ff; background:#0b1016; border-bottom:1px solid #0f1926; }
+  #ui code { color:#ffe08a; }
+  #c { flex: 1 1 auto; display:block; width:100%; height:100%; background:#000; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="ui">
+    <strong>ASCII Photon — v0.5.5.4 Diagnostic</strong> — <b>WASD</b> aim, <b>Arrows</b> move, <code>Space</code> fire, <code>D</code> toggle debug, <code>Z</code> grid, <code>C</code> center.
+    This build draws giant markers and overlays so we can see what's failing.
+  </div>
+  <canvas id="c"></canvas>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d'); // no special flags for max compatibility
+  if (!ctx) alert('Canvas context failed to init.');
+
+  const cellW = 12, cellH = 20; // larger so text is very visible
+  let cols = 80, rows = 40;
+  let debug = true, showGrid = true;
+
+  const Laser = { x: 40, y: 22, angle: 0, fireHeld:false, fireLatched:false };
+
+  function fitCanvas(){
+    try{
+      cols = Math.max(40, Math.floor(window.innerWidth / cellW));
+      rows = Math.max(20, Math.floor((window.innerHeight - document.getElementById('ui').offsetHeight) / cellH));
+      canvas.width = cols * cellW;
+      canvas.height = rows * cellH;
+      Laser.x = Math.floor(cols/2);
+      Laser.y = Math.floor(rows/2);
+    }catch(e){
+      console.log('fitCanvas error', e);
+    }
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  // Input
+  const keys=new Set();
+  window.addEventListener('keydown',e=>{
+    keys.add(e.key);
+    if (e.key==='d' || e.key==='D') debug=!debug;
+    if (e.key==='z' || e.key==='Z') showGrid=!showGrid;
+    if (e.key==='c' || e.key==='C'){ Laser.x=Math.floor(cols/2); Laser.y=Math.floor(rows/2); }
+  });
+  window.addEventListener('keyup',e=>keys.delete(e.key));
+
+  function aimFromWASD(){
+    let ax=0, ay=0;
+    if (keys.has('w')||keys.has('W')) ay--;
+    if (keys.has('s')||keys.has('S')) ay++;
+    if (keys.has('a')||keys.has('A')) ax--;
+    if (keys.has('d')||keys.has('D')) ax++;
+    if (ax||ay) Laser.angle = Math.atan2(ay,ax);
+  }
+  function move(dt){
+    const mv=18*dt;
+    if (keys.has('ArrowUp')) Laser.y -= mv;
+    if (keys.has('ArrowDown')) Laser.y += mv;
+    if (keys.has('ArrowLeft')) Laser.x -= mv;
+    if (keys.has('ArrowRight')) Laser.x += mv;
+    Laser.x = Math.max(1, Math.min(cols-2, Laser.x));
+    Laser.y = Math.max(1, Math.min(rows-2, Laser.y));
+  }
+
+  function drawGrid(){
+    if (!showGrid) return;
+    ctx.fillStyle='rgba(50,80,120,0.25)';
+    for(let x=0;x<cols;x+=4){ ctx.fillText('|', x*cellW, 0); ctx.fillText('|', x*cellW, (rows-1)*cellH); }
+    for(let y=0;y<rows;y+=2){ ctx.fillText('-', 0, y*cellH); ctx.fillText('-', (cols-1)*cellW, y*cellH); }
+  }
+  function drawEmitter(){
+    const ex=Math.round(Laser.x), ey=Math.round(Laser.y);
+    ctx.fillStyle='rgba(255,255,255,1)';
+    ctx.font = '18px monospace';
+    ctx.fillText('@', ex*cellW, ey*cellH);
+    ctx.fillText('YOU', Math.max(0,ex-1)*cellW, Math.max(0,ey-2)*cellH);
+    // big plus
+    const arms=[[-1,0],[1,0],[0,-1],[0,1],[-2,0],[2,0],[0,-2],[0,2]];
+    for(const [dx,dy] of arms){
+      const gx=ex+dx, gy=ey+dy;
+      if (gx>=0&&gx<cols&&gy>=0&&gy<rows) ctx.fillText('+', gx*cellW, gy*cellH);
+    }
+    // aim dots
+    ctx.fillStyle='rgba(255,255,255,0.7)';
+    const dx=Math.cos(Laser.angle), dy=Math.sin(Laser.angle);
+    for(let i=1;i<cols*0.7;i+=2){
+      const nx=Math.round(ex+dx*i), ny=Math.round(ey+dy*i);
+      if (nx<1||nx>=cols-1||ny<1||ny>=rows-1) break;
+      ctx.fillText('.', nx*cellW, ny*cellH);
+    }
+  }
+
+  function drawDebug(){
+    if (!debug) return;
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.font = '14px monospace';
+    const lines=[
+      'DEBUG ON',
+      `window: ${window.innerWidth}×${window.innerHeight} dpr=${window.devicePixelRatio||1}`,
+      `canvas: ${canvas.width}×${canvas.height} css=${canvas.clientWidth}×${canvas.clientHeight}`,
+      `grid: cols=${cols} rows=${rows} cell=${cellW}×${cellH}`,
+      `emitter: x=${Laser.x.toFixed(2)} y=${Laser.y.toFixed(2)} angle=${(Laser.angle*180/Math.PI).toFixed(1)}°`
+    ];
+    lines.forEach((s,i)=>ctx.fillText(s, 10, 10 + i*18));
+  }
+
+  let prev=performance.now();
+  function frame(now){
+    const dt=Math.min(0.033, (now-prev)/1000); prev=now;
+    aimFromWASD(); move(dt);
+    // clear
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.textBaseline='top'; ctx.font='18px monospace';
+    drawGrid();
+    drawEmitter();
+    drawDebug();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // On-load boot text
+  ctx.fillStyle='white';
+  ctx.font='20px monospace';
+  ctx.fillText('BOOT OK — v0.5.5.4', 20, 40);
+  ctx.fillText('Press D to toggle debug, Z grid, C center.', 20, 64);
+})();
+</script>
+</body>
+</html>

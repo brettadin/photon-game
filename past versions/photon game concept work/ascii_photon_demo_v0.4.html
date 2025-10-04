@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Photon — Advanced Lab (Interference, LPF Ghost, Integrator)</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; color:#cfe9ff; height:100%; }
+  #wrap { display:flex; flex-direction:column; height:100%; }
+  #ui { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size:14px; line-height:1.35; padding:8px 10px; color:#bfe3ff; background:#0b1016; border-bottom:1px solid #0f1926; }
+  #ui code { color:#ffe08a; }
+  #c { flex:1 1 auto; display:block; width:100%; height:100%; background:#000; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="ui">
+    <strong>ASCII Photon — Advanced Lab</strong> — click to <em>blink</em>; photon snaps back to emitter.
+    Keys: <code>1..5</code>=λ 700/600/500/400/320 nm, <code>[</code>/<code>]</code>=polarization, <code>F</code>=toggle long‑pass filter (LPF),
+    <code>,</code>/<code>.</code>=Michelson ΔL, <code>C</code>=clear, <code>R</code>=reset.
+  </div>
+  <canvas id="c"></canvas>
+</div>
+
+<script>
+(() => {
+  // ---------- Grid ----------
+  const cellW = 9, cellH = 16;
+  let cols = 132, rows = 50;
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha:false, desynchronized:true });
+  ctx.imageSmoothingEnabled = false;
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Courier New, monospace';
+
+  function fitCanvas(){
+    const W = window.innerWidth;
+    const H = window.innerHeight - document.getElementById('ui').offsetHeight;
+    cols = Math.max(110, Math.floor(W / cellW) - 2);
+    rows = Math.max(40, Math.floor(H / cellH) - 1);
+    canvas.width = cols * cellW;
+    canvas.height = rows * cellH;
+    placeWorld();
+  }
+  window.addEventListener('resize', fitCanvas);
+
+  // ---------- Photon state ----------
+  const Photon = {
+    lambdaNm: 656.28,
+    polAngle: 0,
+    pos: {x: 20, y: 26},
+    emitter: {x: 20, y: 26},
+    snapBackDelay: 0.06,
+    snapTimer: 0,
+    speedScale(nm){
+      const LMIN=200, LMAX=800;
+      const inv = 1/Math.min(Math.max(nm,LMIN), LMAX);
+      const invMin=1/LMIN, invMax=1/LMAX;
+      return 1.0 + 0.7 * ((inv - invMax) / (invMin - invMax));
+    }
+  };
+
+  // ---------- World elements ----------
+  const World = {
+    // Splitter + detectors
+    splitter: { x:0, y:0 },
+    detA: { x:0, y:0, lastAmp:0, lastHit:-1 },
+    detB: { x:0, y:0, lastAmp:0, lastHit:-1 },
+    bridge: { open:false, timer:0, window:0.25 },
+    // Polarizer
+    polarizer: { x:0, y:0, axisAngle:0, open:false, openTimer:0, lastEff:0, threshold:0.55 },
+    // LPF ghost demo doors
+    doorMain: { x:0, y:0, targetNm: 500, tol: 3, open:false, timer:0 },
+    doorGhost: { x:0, y:0, targetNm: 250, tol: 3, open:false, timer:0 },
+    lpfOn: false, lpfCutNm: 400,
+    // Michelson interferometer
+    mic: {
+      nodeX:0, nodeY:0, // recombiner cell where we test interference
+      deltaL: 0.0,      // adjustable path diff in "cells"
+      tolPhase: 0.35,   // radians tolerance for "perfect" port
+      lastAmp:0,
+      port1:{ x:0, y:0, open:false, timer:0 },
+      port2:{ x:0, y:0, open:false, timer:0 },
+      fringe:{ x0:0, y0:0, w:32, h:8 } // tiny fringe display area
+    },
+    // Integrator gate
+    integ: { x:0, y:0, need:0.6, acc:0.0, window:0.6, open:false, timer:0 }
+  };
+
+  function placeWorld(){
+    Photon.emitter.x = Math.floor(cols*0.16);
+    Photon.emitter.y = Math.floor(rows*0.58);
+    Photon.pos.x = Photon.emitter.x;
+    Photon.pos.y = Photon.emitter.y;
+
+    World.splitter.x = Math.floor(cols*0.44);
+    World.splitter.y = Math.floor(rows*0.34);
+
+    World.detA.x = Math.floor(cols*0.68);
+    World.detA.y = Math.floor(rows*0.22);
+    World.detB.x = Math.floor(cols*0.68);
+    World.detB.y = Math.floor(rows*0.46);
+    World.detA.lastAmp=0; World.detA.lastHit=-1;
+    World.detB.lastAmp=0; World.detB.lastHit=-1;
+    World.bridge.open=false; World.bridge.timer=0;
+
+    World.polarizer.x = Math.floor(cols*0.54);
+    World.polarizer.y = Math.floor(rows*0.74);
+    World.polarizer.axisAngle = 0;
+    World.polarizer.open=false; World.polarizer.openTimer=0; World.polarizer.lastEff=0;
+
+    World.doorMain.x = Math.floor(cols*0.86);
+    World.doorMain.y = Math.floor(rows*0.62);
+    World.doorMain.open=false; World.doorMain.timer=0;
+    World.doorGhost.x = Math.floor(cols*0.86);
+    World.doorGhost.y = Math.floor(rows*0.68);
+    World.doorGhost.open=false; World.doorGhost.timer=0;
+    World.lpfOn = false;
+
+    // Michelson
+    World.mic.nodeX = Math.floor(cols*0.32);
+    World.mic.nodeY = Math.floor(rows*0.18);
+    World.mic.deltaL = 0.0;
+    World.mic.port1.x = Math.floor(cols*0.19);
+    World.mic.port1.y = Math.floor(rows*0.12);
+    World.mic.port2.x = Math.floor(cols*0.45);
+    World.mic.port2.y = Math.floor(rows*0.12);
+    World.mic.port1.open=false; World.mic.port1.timer=0;
+    World.mic.port2.open=false; World.mic.port2.timer=0;
+    World.mic.fringe.x0 = World.mic.nodeX - 16;
+    World.mic.fringe.y0 = World.mic.nodeY + 2;
+
+    // Integrator
+    World.integ.x = Math.floor(cols*0.82);
+    World.integ.y = Math.floor(rows*0.26);
+    World.integ.acc = 0; World.integ.open=false; World.integ.timer=0;
+  }
+
+  fitCanvas();
+
+  // ---------- Wavefronts (perf-friendly) ----------
+  const MAX_WAVEFRONTS = 6;
+  let waveIdSeq = 1;
+  class Wavefront {
+    constructor(segments, lambdaNm, tag="main", originCell=null){
+      this.id = waveIdSeq++; this.tag = tag; this.segments = segments;
+      this.lambdaNm = lambdaNm; this.t = 0; this.life = 0.85;
+      this.expand = 10.0; this.sigma = 0.6; this.omega = 7.5;
+      this.startedAt = originCell; this.splitMemo=false;
+      // static bbox
+      let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+      for (const s of segments){ minx=Math.min(minx,s.ax,s.bx); miny=Math.min(miny,s.ay,s.by);
+        maxx=Math.max(maxx,s.ax,s.bx); maxy=Math.max(maxy,s.ay,s.by); }
+      this.baseBBox={minx,miny,maxx,maxy};
+    }
+    alive(){ return this.t < this.life; }
+    step(dt){ this.t += dt; }
+    bbox(){
+      const s=Photon.speedScale(this.lambdaNm);
+      const r=this.expand*s*this.t + 2.5*this.sigma;
+      return { minx:this.baseBBox.minx-r, miny:this.baseBBox.miny-r, maxx:this.baseBBox.maxx+r, maxy:this.baseBBox.maxy+r };
+    }
+    bboxContainsCell(cx,cy){ const b=this.bbox(); return cx>=b.minx && cx<=b.maxx && cy>=b.miny && cy<=b.maxy; }
+    minDist(cx,cy){
+      let min=1e9;
+      for (const s of this.segments){
+        const dx=s.bx-s.ax, dy=s.by-s.ay;
+        const len2 = dx*dx + dy*dy + 1e-6;
+        const t=Math.max(0, Math.min(1, ((cx - s.ax)*dx + (cy - s.ay)*dy)/len2));
+        const px=s.ax + t*dx, py=s.ay + t*dy;
+        const d=Math.hypot(cx-px, cy-py); if (d<min) min=d;
+      }
+      return min;
+    }
+    sample(cx,cy){
+      if (!this.bboxContainsCell(cx,cy)) return 0.0;
+      const s=Photon.speedScale(this.lambdaNm);
+      const w=this.expand*s*this.t;
+      const d=this.minDist(cx,cy);
+      if (Math.abs(d - w) > 3.0) return 0.0;
+      const g=Math.exp(-((d-w)*(d-w))/(2*this.sigma*this.sigma));
+      const env=Math.max(0, 1 - (this.t/this.life));
+      const stripes=0.6 + 0.4*Math.sin((w - d) * 4.2 - this.t * this.omega);
+      return g * env * stripes;
+    }
+    trySplitAt(cellX,cellY){
+      if (this.splitMemo) return [];
+      if (this.startedAt && this.startedAt.x===cellX && this.startedAt.y===cellY) return [];
+      const amp=this.sample(cellX+0.5, cellY+0.5);
+      if (amp>=0.68){
+        this.splitMemo=true;
+        const sx=cellX+0.5, sy=cellY+0.5;
+        const a={ax:sx, ay:sy, bx:World.detA.x+0.5, by:World.detA.y+0.5};
+        const b={ax:sx, ay:sy, bx:World.detB.x+0.5, by:World.detB.y+0.5};
+        return [ new Wavefront([a], this.lambdaNm, "splitA"), new Wavefront([b], this.lambdaNm, "splitB") ];
+      }
+      return [];
+    }
+  }
+  const wavefronts = [];
+
+  // ---------- Geometry ----------
+  function bresenham(ax,ay,bx,by){
+    const pts=[]; let x0=ax|0,y0=ay|0,x1=bx|0,y1=by|0;
+    const dx=Math.abs(x1-x0), sx=x0<x1?1:-1;
+    const dy=-Math.abs(y1-y0), sy=y0<y1?1:-1;
+    let err=dx+dy;
+    while(true){
+      pts.push({x:x0,y:y0});
+      if (x0===x1 && y0===y1) break;
+      const e2=2*err;
+      if (e2>=dy){ err+=dy; x0+=sx; }
+      if (e2<=dx){ err+=dx; y0+=sy; }
+    }
+    return pts;
+  }
+  function pointsToSegments(pts){
+    const segs=[];
+    for (let i=0;i<pts.length-1;i++){
+      const a=pts[i], b=pts[i+1];
+      if (a.x===b.x && a.y===b.y) continue;
+      segs.push({ ax:a.x+0.5, ay:a.y+0.5, bx:b.x+0.5, by:b.y+0.5 });
+    }
+    return segs;
+  }
+
+  // ---------- Input ----------
+  let clickCooldown=0;
+  canvas.addEventListener('click', (e)=>{
+    if (clickCooldown>0) return;
+    const rect=canvas.getBoundingClientRect();
+    const gx=Math.max(0, Math.min(cols-1, Math.floor((e.clientX-rect.left)/cellW)));
+    const gy=Math.max(0, Math.min(rows-1, Math.floor((e.clientY-rect.top)/cellH)));
+    const path=bresenham(Photon.emitter.x, Photon.emitter.y, gx, gy);
+    const segs=pointsToSegments(path);
+    if (segs.length){
+      Photon.pos.x=gx; Photon.pos.y=gy; Photon.snapTimer=Photon.snapBackDelay;
+      const wf=new Wavefront(segs, Photon.lambdaNm, "main", {x:gx,y:gy});
+      wavefronts.push(wf);
+      while (wavefronts.length>MAX_WAVEFRONTS) wavefronts.shift();
+      clickCooldown=0.03;
+    }
+  });
+  window.addEventListener('keydown', (e)=>{
+    if (e.key==='1') Photon.lambdaNm=700;
+    else if (e.key==='2') Photon.lambdaNm=600;
+    else if (e.key==='3') Photon.lambdaNm=500;
+    else if (e.key==='4') Photon.lambdaNm=400;
+    else if (e.key==='5') Photon.lambdaNm=320;
+    else if (e.key==='[') Photon.polAngle -= Math.PI/12;
+    else if (e.key===']') Photon.polAngle += Math.PI/12;
+    else if (e.key.toLowerCase()==='f') World.lpfOn = !World.lpfOn;
+    else if (e.key===',') World.mic.deltaL -= 0.2;
+    else if (e.key==='.') World.mic.deltaL += 0.2;
+    else if (e.key.toLowerCase()==='c') wavefronts.length=0;
+    else if (e.key.toLowerCase()==='r') { placeWorld(); wavefronts.length=0; }
+  });
+
+  // ---------- Helpers ----------
+  function wavelengthToColor(nm){
+    const x=Math.min(1, Math.max(0, (nm-380)/(700-380)));
+    const hue=(1-x)*270;
+    const s=0.65,v=1.0,c=v*s,h=hue/60,xcol=c*(1-Math.abs((h%2)-1));
+    let r=0,g=0,b=0;
+    if (0<=h&&h<1){ r=c; g=xcol; b=0; }
+    else if (1<=h&&h<2){ r=xcol; g=c; b=0; }
+    else if (2<=h&&h<3){ r=0; g=c; b=xcol; }
+    else if (3<=h&&h<4){ r=0; g=xcol; b=c; }
+    else if (4<=h&&h<5){ r=xcol; g=0; b=c; }
+    else { r=c; g=0; b=xcol; }
+    const m=v-c;
+    return { r:Math.round((r+m)*255), g:Math.round((g+m)*255), b:Math.round((b+m)*255) };
+  }
+  function polAscii(a){
+    a=((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+    const oct=Math.round(a/(Math.PI/4))%8;
+    return ['-','/','|','\\','-','/','|','\\'][oct];
+  }
+  function malus(pol, axis){ const c=Math.cos(pol-axis); return c*c; }
+
+  function drawText(x,y,str,rgba){ ctx.fillStyle=rgba; ctx.fillText(str, x*cellW, y*cellH); }
+
+  function sampleAtCell(x,y){
+    const cx=x+0.5, cy=y+0.5;
+    let amp=0;
+    for (const wf of wavefronts){
+      if (!wf.bboxContainsCell(cx, cy)) continue;
+      amp = Math.max(amp, wf.sample(cx, cy));
+    }
+    return amp;
+  }
+
+  // ---------- Main loop ----------
+  const ramp=" .:-=+*#%@"; const rampLen=ramp.length;
+  let prev=performance.now();
+  function frame(now){
+    const dt=Math.min(0.033,(now-prev)/1000); prev=now;
+    if (clickCooldown>0){ clickCooldown-=dt; if (clickCooldown<0) clickCooldown=0; }
+    if (Photon.snapTimer>0){ Photon.snapTimer-=dt; if (Photon.snapTimer<=0){ Photon.pos.x=Photon.emitter.x; Photon.pos.y=Photon.emitter.y; } }
+
+    // Step & cull
+    for (let i=wavefronts.length-1;i>=0;i--){ const wf=wavefronts[i]; wf.step(dt); if (!wf.alive()) wavefronts.splice(i,1); }
+
+    // Splitter children
+    for (const wf of wavefronts){ const kids=wf.trySplitAt(World.splitter.x, World.splitter.y); for (const k of kids){ wavefronts.push(k); while (wavefronts.length>MAX_WAVEFRONTS) wavefronts.shift(); } }
+
+    // Detector bridge
+    const thDet=0.6; const tNow=performance.now()/1000;
+    const ampA=sampleAtCell(World.detA.x, World.detA.y);
+    const ampB=sampleAtCell(World.detB.x, World.detB.y);
+    if (ampA>=thDet && World.detA.lastAmp<thDet) World.detA.lastHit=tNow;
+    if (ampB>=thDet && World.detB.lastAmp<thDet) World.detB.lastHit=tNow;
+    World.detA.lastAmp=ampA; World.detB.lastAmp=ampB;
+    if (World.detA.lastHit>0 && World.detB.lastHit>0 && Math.abs(World.detA.lastHit-World.detB.lastHit)<=World.bridge.window){
+      World.bridge.open=true; World.bridge.timer=1.2; World.detA.lastHit=-1; World.detB.lastHit=-1;
+    }
+    if (World.bridge.open){ World.bridge.timer-=dt; if (World.bridge.timer<=0) World.bridge.open=false; }
+
+    // Polarizer gate
+    const polAmp=sampleAtCell(World.polarizer.x, World.polarizer.y);
+    const eff=polAmp * malus(Photon.polAngle, World.polarizer.axisAngle);
+    if (eff>=World.polarizer.threshold && World.polarizer.lastEff<World.polarizer.threshold){ World.polarizer.open=true; World.polarizer.openTimer=0.9; }
+    World.polarizer.lastEff=eff;
+    if (World.polarizer.open){ World.polarizer.openTimer-=dt; if (World.polarizer.openTimer<=0) World.polarizer.open=false; }
+
+    // LPF ghost doors: main reacts at 500 nm, ghost at 250 nm unless LPF is ON (cut 400 nm)
+    function tryDoor(door, cond){
+      if (cond){ door.open=true; door.timer=0.9; }
+      if (door.open){ door.timer-=dt; if (door.timer<=0) door.open=false; }
+    }
+    const ampMain=sampleAtCell(World.doorMain.x-2, World.doorMain.y);
+    const ampGhost=sampleAtCell(World.doorGhost.x-2, World.doorGhost.y);
+    const near = (nm, target, tol)=>Math.abs(nm - target) <= tol;
+    // Main door: needs crest and λ within tol of 500 nm
+    tryDoor(World.doorMain, ampMain>=0.6 && near(Photon.lambdaNm, World.doorMain.targetNm, World.doorMain.tol));
+    // Ghost: reacts at half the λ if LPF is OFF
+    const ghostNm = Photon.lambdaNm / 2;
+    tryDoor(World.doorGhost, !World.lpfOn && ampGhost>=0.6 && near(ghostNm, World.doorGhost.targetNm, World.doorGhost.tol));
+
+    // Michelson interference: sample amplitude at node; compute port intensities by phase
+    const ampMic = sampleAtCell(World.mic.nodeX, World.mic.nodeY);
+    if (ampMic > 0.55){
+      const k = (2*Math.PI) / Math.max(1.0, Photon.lambdaNm);
+      const phi = (k * World.mic.deltaL) % (2*Math.PI);
+      const I1 = 0.5*(1 + Math.cos(phi));  // bright at phi≈0
+      const I2 = 0.5*(1 - Math.cos(phi));  // bright at phi≈π
+      if (I1*ampMic > 0.65){ World.mic.port1.open=true; World.mic.port1.timer=1.0; }
+      if (I2*ampMic > 0.65){ World.mic.port2.open=true; World.mic.port2.timer=1.0; }
+    }
+    if (World.mic.port1.open){ World.mic.port1.timer-=dt; if (World.mic.port1.timer<=0) World.mic.port1.open=false; }
+    if (World.mic.port2.open){ World.mic.port2.timer-=dt; if (World.mic.port2.timer<=0) World.mic.port2.open=false; }
+
+    // Integrator gate: accumulate amplitude while crest present
+    const aIn = sampleAtCell(World.integ.x, World.integ.y);
+    if (aIn > 0.5){ World.integ.acc = Math.min(1.0, World.integ.acc + dt / World.integ.window); }
+    else { World.integ.acc = Math.max(0.0, World.integ.acc - dt*0.8); }
+    if (World.integ.acc >= World.integ.need){ World.integ.open=true; World.integ.timer=1.0; World.integ.acc=0.0; }
+    if (World.integ.open){ World.integ.timer-=dt; if (World.integ.timer<=0) World.integ.open=false; }
+
+    // ---------- Draw ----------
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    const tint=wavelengthToColor(Photon.lambdaNm);
+    const rgba=(a=1)=>`rgba(${tint.r},${tint.g},${tint.b},${a})`;
+
+    // Field
+    for (let y=0;y<rows;y++){
+      for (let x=0;x<cols;x++){
+        // Photon + emitter markers
+        if (x===Photon.pos.x && y===Photon.pos.y){
+          ctx.fillStyle=rgba(1); ctx.fillText('@', x*cellW, y*cellH);
+          ctx.fillStyle=rgba(0.9); ctx.fillText(polAscii(Photon.polAngle), (x+1)*cellW, y*cellH);
+          continue;
+        }
+        if (x===Photon.emitter.x && y===Photon.emitter.y && (Photon.pos.x!==x||Photon.pos.y!==y)){
+          ctx.fillStyle='rgba(180,200,220,0.5)'; ctx.fillText('o', x*cellW, y*cellH);
+        }
+        if (!wavefronts.length) continue;
+        const cx=x+0.5, cy=y+0.5;
+        let amp=0;
+        for (const wf of wavefronts){
+          if (!wf.bboxContainsCell(cx, cy)) continue;
+          amp = Math.max(amp, wf.sample(cx, cy));
+        }
+        if (amp>0.085){
+          const idx=Math.min(rampLen-1, Math.max(0, Math.floor(amp*(rampLen-1))));
+          ctx.fillStyle=rgba(Math.min(1, 0.25+amp*0.9));
+          ctx.fillText(ramp[idx], x*cellW, y*cellH);
+        }
+      }
+    }
+
+    // World labels / UI
+    function text(x,y,s,style){ ctx.fillStyle=style; ctx.fillText(s, x*cellW, y*cellH); }
+
+    // Splitter + detectors
+    text(World.splitter.x, World.splitter.y, 'X', 'rgba(180,220,255,0.95)');
+    text(World.splitter.x-2, World.splitter.y-1, '[splitter]', 'rgba(150,200,255,0.6)');
+    text(World.detA.x, World.detA.y, 'D', ampA>=thDet ? 'rgba(120,255,150,0.95)' : 'rgba(120,180,120,0.7)');
+    text(World.detB.x, World.detB.y, 'D', ampB>=thDet ? 'rgba(120,255,150,0.95)' : 'rgba(120,180,120,0.7)');
+    const bx=Math.floor((World.detA.x+World.detB.x)/2);
+    const by=Math.floor((World.detA.y+World.detB.y)/2);
+    text(bx-3, by, World.bridge.open?'[BRIDGE OPEN]':'[bridge closed]', World.bridge.open?'rgba(120,255,150,0.95)':'rgba(120,180,120,0.6)');
+
+    // Polarizer gate
+    text(World.polarizer.x, World.polarizer.y, polAscii(World.polarizer.axisAngle).repeat(3), 'rgba(200,220,255,0.85)');
+    text(World.polarizer.x-3, World.polarizer.y-1, 'polarizer', 'rgba(150,200,255,0.6)');
+    text(World.polarizer.x+6, World.polarizer.y, World.polarizer.open?'[OPEN]':'[closed]', World.polarizer.open?'rgba(120,255,150,0.95)':'rgba(180,120,120,0.7)');
+
+    // LPF doors
+    text(World.doorMain.x-10, World.doorMain.y-1, 'λ=500 door', 'rgba(180,220,255,0.7)');
+    text(World.doorMain.x, World.doorMain.y, World.doorMain.open?'[OPEN]':'[closed]', World.doorMain.open?'rgba(120,255,150,0.95)':'rgba(180,120,120,0.7)');
+    text(World.doorGhost.x-12, World.doorGhost.y-1, 'ghost at λ/2=250', 'rgba(180,160,220,0.7)');
+    let ghostStyle = World.lpfOn ? 'rgba(120,140,200,0.5)' : (World.doorGhost.open?'rgba(255,160,120,0.95)':'rgba(200,140,120,0.7)');
+    text(World.doorGhost.x, World.doorGhost.y, World.lpfOn ? '[LPF blocking]' : (World.doorGhost.open?'[TRIGGERED]':'[idle]'), ghostStyle);
+    text(World.doorGhost.x-8, World.doorGhost.y+2, World.lpfOn ? 'LPF: ON (cut '+World.lpfCutNm+' nm)' : 'LPF: OFF', World.lpfOn?'rgba(140,200,255,0.9)':'rgba(180,180,180,0.7)');
+
+    // Michelson
+    text(World.mic.nodeX, World.mic.nodeY, '+', 'rgba(200,220,255,0.9)');
+    text(World.mic.nodeX-4, World.mic.nodeY-1, '[Michelson node]', 'rgba(150,200,255,0.6)');
+    text(World.mic.port1.x, World.mic.port1.y, World.mic.port1.open?'[BRIGHT]':'[dark]', World.mic.port1.open?'rgba(120,255,150,0.95)':'rgba(180,120,120,0.7)');
+    text(World.mic.port2.x, World.mic.port2.y, World.mic.port2.open?'[BRIGHT]':'[dark]', World.mic.port2.open?'rgba(120,255,150,0.95)':'rgba(180,120,120,0.7)');
+    text(World.mic.nodeX-10, World.mic.nodeY+World.mic.fringe.h+3, `ΔL=${World.mic.deltaL.toFixed(2)}  (',' '.' to adjust)`, 'rgba(180,220,255,0.75)');
+    // Draw tiny fringe patch (cos stripes)
+    const fx0=World.mic.fringe.x0, fy0=World.mic.fringe.y0;
+    const k=(2*Math.PI)/Math.max(1.0, Photon.lambdaNm);
+    for (let yy=0; yy<World.mic.fringe.h; yy++){
+      for (let xx=0; xx<World.mic.fringe.w; xx++){
+        const phase = k*(xx - World.mic.fringe.w/2) + k*World.mic.deltaL;
+        const v = 0.5 + 0.5*Math.cos(phase);
+        const ch = ramp[Math.floor(v*(rampLen-1))];
+        ctx.fillStyle = `rgba(${tint.r},${tint.g},${tint.b},${0.35 + 0.45*v})`;
+        ctx.fillText(ch, (fx0+xx)*cellW, (fy0+yy)*cellH);
+      }
+    }
+    text(fx0, fy0-1, '[fringes]', 'rgba(150,200,255,0.6)');
+
+    // Integrator
+    text(World.integ.x-6, World.integ.y-1, 'integrator (hold crest)', 'rgba(150,200,255,0.6)');
+    const bar = Math.floor(World.integ.acc*10);
+    text(World.integ.x-6, World.integ.y, `[${'#'.repeat(bar)}${'.'.repeat(10-bar)}]`, 'rgba(180,220,255,0.8)');
+    text(World.integ.x+8, World.integ.y, World.integ.open?'[OPEN]':'[closed]', World.integ.open?'rgba(120,255,150,0.95)':'rgba(180,120,120,0.7)');
+
+    // HUD
+    const s=Photon.speedScale(Photon.lambdaNm).toFixed(2);
+    const nm=Math.round(Photon.lambdaNm);
+    const deg=((Photon.polAngle*180/Math.PI)%360+360)%360;
+    drawText(1,1,`λ=${nm} nm  speed×${s}  pol=${deg.toFixed(0)}°  LPF=${World.lpfOn?'ON':'OFF'}  waves:${wavefronts.length}/${MAX_WAVEFRONTS}`, 'rgba(180,220,255,0.85)');
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

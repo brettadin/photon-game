@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Photon — v0.5.5.2 Hotfix (Find‑Me)</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; color:#cfe9ff; height:100%; }
+  #wrap { display:flex; flex-direction:column; height:100%; }
+  #ui { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size:14px; line-height:1.35; padding:8px 10px; color:#bfe3ff; background:#0b1016; border-bottom:1px solid #0f1926; }
+  #ui code { color:#ffe08a; }
+  #c { flex: 1 1 auto; display:block; width:100%; height:100%; background:#000; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="ui">
+    <strong>ASCII Photon — v0.5.5.2 Hotfix (Find‑Me)</strong>
+    — Aim <b>WASD</b>, move <b>Arrows</b>, <code>Space</code> tap=single, hold=stream, <code>T</code> toggle, λ presets <code>1..5</code>, fine-tune <code>-</code>/<code>=</code>,
+    <code>G</code> drain, <code>R</code> reset, <code>C</code> center on me, <code>F</code> flash ping, <code>H</code> toggle aim preview.
+    Photons **excite objects**; waves radiate from the hit object.
+  </div>
+  <canvas id="c"></canvas>
+</div>
+
+<script>
+(() => {
+  // ---------- Grid & canvas ----------
+  const cellW = 9, cellH = 16;
+  let cols = 128, rows = 48;
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha:false, desynchronized:true });
+  ctx.imageSmoothingEnabled = false;
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Courier New, monospace';
+
+  // ---------- Laser FIRST ----------
+  const Laser = {
+    x: Math.floor(cols*0.25),
+    y: Math.floor(rows*0.55),
+    angle: 0,
+    lambdaNm: 600,
+    fireHeld: false,
+    fireLatched: false,
+    drainOn: true,
+    fireRate: 12,
+    fireCooldown: 0,
+    batteryMax: 100,
+    battery: 100,
+    rechargePerSec: 8,
+    speedScale(nm){
+      const LMIN=200, LMAX=800;
+      const inv = 1/Math.min(Math.max(nm,LMIN), LMAX);
+      const invMin=1/LMIN, invMax=1/LMAX;
+      return 1.0 + 0.7 * ((inv - invMax) / (invMin - invMax));
+    },
+    costPerShot(nm){
+      const inv = 1/Math.min(Math.max(nm, 200), 800);
+      const invMin = 1/800, invMax = 1/200;
+      const t = (inv - invMin) / (invMax - invMin);
+      const cmin = 0.18, cmax = 0.95;
+      return cmin + (cmax - cmin) * Math.min(Math.max(t,0),1);
+    }
+  };
+  function clampEmitter(){
+    Laser.x = Math.max(1, Math.min(cols-2, Laser.x));
+    Laser.y = Math.max(1, Math.min(rows-2, Laser.y));
+  }
+
+  function fitCanvas(){
+    const W = window.innerWidth;
+    const H = window.innerHeight - document.getElementById('ui').offsetHeight;
+    cols = Math.max(96, Math.floor(W / cellW));
+    rows = Math.max(32, Math.floor(H / cellH));
+    canvas.width = cols * cellW;
+    canvas.height = rows * cellH;
+    clampEmitter();
+    placeAtoms();
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  // ---------- Atoms/Molecules ----------
+  const atoms = [];
+  function placeAtoms(){
+    atoms.length = 0;
+    const spots = [
+      { fx:0.60, fy:0.30, name:'Na',  nm: 589, tol:8 },
+      { fx:0.78, fy:0.55, name:'Cl₂', nm: 520, tol:10 },
+      { fx:0.46, fy:0.72, name:'Hg',  nm: 436, tol:6 },
+      { fx:0.70, fy:0.25, name:'O₂',  nm: 760, tol:12 }
+    ];
+    for (const s of spots){
+      atoms.push({
+        x: Math.floor(cols*s.fx),
+        y: Math.floor(rows*s.fy),
+        label: s.name,
+        resNm: s.nm,
+        tol: s.tol,
+        excited: 0
+      });
+    }
+  }
+
+  // ---------- Input ----------
+  const keys = new Set();
+  window.addEventListener('keydown', (e)=>{
+    keys.add(e.key);
+    if (e.key === ' ') { fireSingle(); Laser.fireHeld = true; e.preventDefault(); }
+    if (e.key === 't' || e.key === 'T') Laser.fireLatched = !Laser.fireLatched;
+    if (e.key === 'g' || e.key === 'G') Laser.drainOn = !Laser.drainOn;
+    if (e.key === '1') Laser.lambdaNm = 700;
+    if (e.key === '2') Laser.lambdaNm = 600;
+    if (e.key === '3') Laser.lambdaNm = 500;
+    if (e.key === '4') Laser.lambdaNm = 400;
+    if (e.key === '5') Laser.lambdaNm = 320;
+    if (e.key === '-' || e.key === '_') Laser.lambdaNm = Math.min(800, Math.max(200, Laser.lambdaNm + 5));
+    if (e.key === '=' || e.key === '+') Laser.lambdaNm = Math.min(800, Math.max(200, Laser.lambdaNm - 5));
+    if (e.key === 'r' || e.key === 'R') resetWorld();
+    if (e.key === 'c' || e.key === 'C') centerMe();
+    if (e.key === 'f' || e.key === 'F') findMeTimer = 1.1;
+    if (e.key === 'h' || e.key === 'H') showAimPreview = !showAimPreview;
+  });
+  window.addEventListener('keyup', (e)=>{
+    keys.delete(e.key);
+    if (e.key === ' ') Laser.fireHeld = false;
+  });
+
+  function resetWorld(){
+    Laser.x = Math.floor(cols*0.25);
+    Laser.y = Math.floor(rows*0.55);
+    Laser.angle = 0;
+    Laser.battery = Laser.batteryMax;
+    photons.length = 0;
+    emissions.length = 0;
+    for (const a of atoms) a.excited = 0;
+  }
+  function centerMe(){
+    Laser.x = Math.floor(cols*0.5);
+    Laser.y = Math.floor(rows*0.5);
+  }
+
+  // ---------- Aiming & movement ----------
+  function aimFromWASD(){
+    let ax=0, ay=0;
+    if (keys.has('w') || keys.has('W')) ay -= 1;
+    if (keys.has('s') || keys.has('S')) ay += 1;
+    if (keys.has('a') || keys.has('A')) ax -= 1;
+    if (keys.has('d') || keys.has('D')) ax += 1;
+    if (ax===0 && ay===0) return;
+    Laser.angle = Math.atan2(ay, ax);
+  }
+  function moveWithArrows(dt){
+    const mv=18*dt;
+    if (keys.has('ArrowUp')) Laser.y -= mv;
+    if (keys.has('ArrowDown')) Laser.y += mv;
+    if (keys.has('ArrowLeft')) Laser.x -= mv;
+    if (keys.has('ArrowRight')) Laser.x += mv;
+    clampEmitter();
+  }
+
+  // ---------- Helpers ----------
+  function wavelengthToColor(nm){
+    const x = Math.min(1, Math.max(0, (nm - 380) / (700 - 380)));
+    const hue = (1 - x) * 270;
+    const s = 0.65, v = 1.0;
+    const c = v * s;
+    const h = hue / 60;
+    const xcol = c * (1 - Math.abs((h % 2) - 1));
+    let r=0,g=0,b=0;
+    if (0<=h && h<1){ r=c; g=xcol; b=0; }
+    else if (1<=h && h<2){ r=xcol; g=c; b=0; }
+    else if (2<=h && h<3){ r=0; g=c; b=xcol; }
+    else if (3<=h && h<4){ r=0; g=xcol; b=c; }
+    else if (4<=h && h<5){ r=xcol; g=0; b=c; }
+    else { r=c; g=0; b=xcol; }
+    const m = v - c;
+    return { r:Math.round((r+m)*255), g:Math.round((g+m)*255), b:Math.round((b+m)*255) };
+  }
+  function angleAscii(a){
+    a = ((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+    const oct = Math.round(a/(Math.PI/4))%8;
+    return ['>','/','^','\\','<','\\','v','/'][oct];
+  }
+
+  // ---------- Photons ----------
+  const MAX_PHOTONS = 60;
+  class Photon {
+    constructor(x,y,angle,lambdaNm){
+      this.x=x; this.y=y; this.px=x; this.py=y;
+      const v = 36;
+      this.vx=Math.cos(angle)*v; this.vy=Math.sin(angle)*v;
+      this.lambdaNm=lambdaNm; this.age=0; this.life=4.0;
+    }
+    step(dt){ this.px=this.x; this.py=this.y; this.x += this.vx*dt; this.y += this.vy*dt; this.age += dt; }
+    alive(){ return this.age<=this.life && this.x>=0 && this.x<cols && this.y>=0 && this.y<rows; }
+  }
+  const photons=[];
+
+  function fireSingle(){
+    if (Laser.drainOn && Laser.battery <= 0) return;
+    const p = new Photon(Laser.x, Laser.y, Laser.angle, Laser.lambdaNm);
+    photons.push(p);
+    while (photons.length > MAX_PHOTONS) photons.shift();
+    if (Laser.drainOn) Laser.battery = Math.max(0, Laser.battery - Laser.costPerShot(Laser.lambdaNm));
+  }
+
+  // ---------- Emission (from excited objects) ----------
+  class Emission {
+    constructor(x,y,lambdaNm,ampScale=1){
+      this.x=x; this.y=y; this.lambdaNm=lambdaNm; this.t=0;
+      this.life=1.2;
+      this.waveSpeed = 14.0 * Laser.speedScale(lambdaNm);
+      this.ringSigma = 0.75;
+      this.coreSigma = 0.5;
+      this.glowReach = 10.0;
+      this.glowStrength = 0.35;
+      this.ampScale = ampScale;
+    }
+    step(dt){ this.t += dt; }
+    alive(){ return this.t < this.life; }
+    bboxContainsCell(cx,cy){
+      const r = Math.max(3.0, (this.waveSpeed*this.t) + 3.5);
+      return Math.abs(cx - this.x) <= r && Math.abs(cy - this.y) <= r;
+    }
+    sample(cx,cy){
+      const dx=cx - this.x, dy=cy - this.y;
+      const d=Math.hypot(dx,dy);
+      const w = this.waveSpeed * this.t;
+      const ring = Math.exp(-((d - w)*(d - w)) / (2*this.ringSigma*this.ringSigma));
+      const core = Math.exp(-(d*d)/(2*this.coreSigma*this.coreSigma));
+      const glow = this.glowStrength * Math.exp(-d / this.glowReach);
+      const env = Math.max(0, 1 - (this.t/this.life));
+      const shimmer = 0.75 + 0.25 * Math.sin(this.t * 7.0 + d*2.0);
+      return Math.min(1.0, (0.7*ring + 0.6*core + glow) * env * shimmer) * this.ampScale;
+    }
+  }
+  const emissions = [];
+
+  function segmentDistance(ax,ay,bx,by,cx,cy){
+    const dx=bx-ax, dy=by-ay;
+    const len2=dx*dx + dy*dy + 1e-6;
+    const t=Math.max(0, Math.min(1, ((cx-ax)*dx + (cy-ay)*dy) / len2));
+    const px=ax + t*dx, py=ay + t*dy;
+    return Math.hypot(px-cx, py-cy);
+  }
+  function tryExcite(p){
+    const hitRadius = 0.8;
+    for (const a of atoms){
+      const d = segmentDistance(p.px,p.py,p.x,p.y, a.x+0.5, a.y+0.5);
+      if (d <= hitRadius){
+        const delta = Math.abs(Laser.lambdaNm - a.resNm);
+        const eff = Math.exp(- (delta*delta) / (2 * a.tol * a.tol));
+        const amp = 0.35 + 0.65*eff;
+        emissions.push(new Emission(a.x+0.5, a.y+0.5, Laser.lambdaNm, amp));
+        a.excited = 0.8 * (0.6 + 0.4*eff);
+        return true; // absorbed
+      }
+    }
+    // wall scatter if we cross boundary
+    if (p.x<1 || p.x>cols-2 || p.y<1 || p.y>rows-2){
+      const wx = Math.min(Math.max(p.x,1), cols-2);
+      const wy = Math.min(Math.max(p.y,1), rows-2);
+      emissions.push(new Emission(wx, wy, Laser.lambdaNm, 0.25));
+      return true;
+    }
+    return false;
+  }
+
+  // ---------- Aim preview & find‑me ----------
+  let showAimPreview = true;
+  let findMeTimer = 0; // seconds
+  function rayPoints(x, y, angle, maxLen){
+    const pts=[];
+    const dx=Math.cos(angle), dy=Math.sin(angle);
+    for (let i=0;i<maxLen;i++){
+      const nx = Math.round(x + dx*i);
+      const ny = Math.round(y + dy*i);
+      if (nx<1 || nx>=cols-1 || ny<1 || ny>=rows-1) break;
+      if (pts.length===0 || pts[pts.length-1].x!==nx || pts[pts.length-1].y!==ny) pts.push({x:nx,y:ny});
+    }
+    return pts;
+  }
+
+  // ---------- Main loop ----------
+  const ramp=" .:-=+*#@%"; const rampLen=ramp.length;
+  let prev=performance.now();
+  function frame(now){
+    const dt=Math.min(0.033,(now-prev)/1000); prev=now;
+
+    // Input
+    aimFromWASD();
+    moveWithArrows(dt);
+
+    // Fire control
+    const firing = (Laser.fireHeld || Laser.fireLatched) && (Laser.drainOn ? Laser.battery>0 : true);
+    Laser.fireCooldown -= dt;
+    if (firing && Laser.fireCooldown <= 0){
+      fireSingle();
+      Laser.fireCooldown = 1 / Laser.fireRate;
+    }
+    if (!firing && Laser.drainOn){
+      Laser.battery = Math.min(Laser.batteryMax, Laser.battery + Laser.rechargePerSec * dt);
+    }
+
+    // Step photons and excite
+    for (let i=photons.length-1;i>=0;i--){
+      const p=photons[i]; p.step(dt);
+      const hit = tryExcite(p);
+      if (hit || !p.alive()) photons.splice(i,1);
+    }
+
+    // Step emissions
+    for (let i=emissions.length-1;i>=0;i--){
+      const e=emissions[i]; e.step(dt);
+      if (!e.alive()) emissions.splice(i,1);
+    }
+    for (const a of atoms){ if (a.excited>0) a.excited -= dt; if (a.excited<0) a.excited=0; }
+
+    // Draw
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    const tint=wavelengthToColor(Laser.lambdaNm);
+    const rgba=(a=1)=>`rgba(${tint.r},${tint.g},${tint.b},${a})`;
+
+    // Field + emissions
+    for (let y=0;y<rows;y++){
+      for (let x=0;x<cols;x++){
+        let amp=0;
+        const cx=x+0.5, cy=y+0.5;
+        for (const e of emissions){ if (e.bboxContainsCell(cx,cy)) amp = Math.max(amp, e.sample(cx,cy)); }
+        if (amp>0.06){
+          const idx=Math.min(rampLen-1, Math.max(0, Math.floor(amp*(rampLen-1))));
+          ctx.fillStyle=rgba(Math.min(1, 0.18 + amp*0.95));
+          ctx.fillText(ramp[idx], x*cellW, y*cellH);
+        }
+      }
+    }
+
+    // Atoms
+    for (const a of atoms){
+      const color = a.excited>0 ? `rgba(120,255,150,0.95)` : `rgba(150,200,255,0.85)`;
+      ctx.fillStyle = color;
+      ctx.fillText('O', a.x*cellW, a.y*cellH);
+      ctx.fillStyle = 'rgba(150,200,255,0.6)';
+      ctx.fillText(`${a.label}[${a.resNm}nm]`, Math.max(0,(a.x-2))*cellW, Math.max(0,(a.y-1))*cellH);
+    }
+
+    // Aim preview (dotted)
+    if (showAimPreview){
+      const pts = rayPoints(Laser.x, Laser.y, Laser.angle, Math.floor(cols*0.8));
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      for (let i=0;i<pts.length;i+=2){
+        const p=pts[i];
+        ctx.fillText('.', p.x*cellW, p.y*cellH);
+      }
+    }
+
+    // Emitter marker (big and obvious)
+    const ex = Math.round(Laser.x), ey = Math.round(Laser.y);
+    const mark = [[' ','+',' '],['+','@','+'],[' ','+',' ']];
+    for (let dy=-1; dy<=1; dy++){
+      for (let dx=-1; dx<=1; dx++){
+        const ch = mark[dy+1][dx+1];
+        if (ch===' ') continue;
+        const gx = ex+dx, gy = ey+dy;
+        if (gx<0||gx>=cols||gy<0||gy>=rows) continue;
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.fillText(ch, gx*cellW, gy*cellH);
+      }
+    }
+    // Label "YOU" above emitter
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.fillText('YOU', Math.max(0,ex-1)*cellW, Math.max(0,ey-2)*cellH);
+
+    // Flash ping
+    if (findMeTimer>0){
+      findMeTimer -= dt;
+      const phase = 1 - Math.max(0, findMeTimer/1.1);
+      // draw expanding ring
+      const rad = 4 + phase*10;
+      ctx.fillStyle='rgba(255,255,255,0.8)';
+      for (let a=0;a<Math.PI*2; a+=0.35){
+        const px = Math.round(ex + Math.cos(a)*rad);
+        const py = Math.round(ey + Math.sin(a)*rad);
+        if (px>=0&&px<cols&&py>=0&&py<rows) ctx.fillText('o', px*cellW, py*cellH);
+      }
+    }
+
+    // Photons (brighter)
+    for (const p of photons){
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText('*', Math.round(p.x)*cellW, Math.round(p.y)*cellH);
+    }
+
+    // HUD text
+    function text(x,y,s,style){ ctx.fillStyle=style; ctx.fillText(s, x*cellW, y*cellH); }
+    const s=Laser.speedScale(Laser.lambdaNm).toFixed(2);
+    const nm=Math.round(Laser.lambdaNm);
+    const mode = (Laser.fireHeld || Laser.fireLatched) ? "FIRE: ON" : "FIRE: OFF";
+    const drain = Laser.drainOn ? "drain ON" : "drain OFF";
+    const bar = Math.floor((Laser.battery/Laser.batteryMax)*20);
+    text(1,1,`λ=${nm} nm  speed×${s}  ${mode}  ${drain}  aim: WASD  move: arrows`, 'rgba(180,220,255,0.9)');
+    text(1,2,`battery [${'#'.repeat(bar)}${'.'.repeat(20-bar)}] ${Math.max(0,Math.round(Laser.battery))} / ${Laser.batteryMax}   photons:${photons.length}/${MAX_PHOTONS}   emit:${emissions.length}`, 'rgba(160,200,255,0.85)');
+    text(cols-22,1,`F: flash  C: center  H: aim ${showAimPreview?'ON':'OFF'}`, 'rgba(255,255,255,0.7)');
+
+    // Mini‑map (top‑left overlay)
+    const mmCols=28, mmRows=10;
+    const mmX=1, mmY=rows- (mmRows+2) - 1; // bottom-left
+    ctx.fillStyle='rgba(255,255,255,0.25)';
+    // border
+    for (let i=0;i<mmCols;i++){ ctx.fillText('-', (mmX+i)*cellW, (mmY-1)*cellH); ctx.fillText('-', (mmX+i)*cellW, (mmY+mmRows)*cellH); }
+    for (let j=0;j<mmRows;j++){ ctx.fillText('|', (mmX-1)*cellW, (mmY+j)*cellH); ctx.fillText('|', (mmX+mmCols)*cellW, (mmY+j)*cellH); }
+    // atoms
+    for (const a of atoms){
+      const mx = mmX + Math.floor(a.x / cols * (mmCols-1));
+      const my = mmY + Math.floor(a.y / rows * (mmRows-1));
+      ctx.fillStyle='rgba(150,200,255,0.8)';
+      ctx.fillText('o', mx*cellW, my*cellH);
+    }
+    // emitter dot
+    {
+      const mx = mmX + Math.floor(Laser.x / cols * (mmCols-1));
+      const my = mmY + Math.floor(Laser.y / rows * (mmRows-1));
+      ctx.fillStyle='rgba(255,255,255,0.95)';
+      ctx.fillText('x', mx*cellW, my*cellH);
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

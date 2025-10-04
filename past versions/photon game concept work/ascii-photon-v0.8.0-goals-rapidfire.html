@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Photon — v0.8.0 Goals + Rapid Fire</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; color:#cfe9ff; height:100%; }
+  #wrap { display:flex; flex-direction:column; height:100%; }
+  #ui { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size:14px; line-height:1.35; padding:8px 10px; color:#bfe3ff; background:#0b1016; border-bottom:1px solid #0f1926; }
+  #ui code { color:#ffe08a; }
+  #c { flex: 1 1 auto; display:block; width:100%; height:100%; background:#000; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="ui">
+    <strong>ASCII Photon — v0.8.0 Goals + Rapid Fire</strong>
+    — Move <b>WASD</b>, aim mouse, fire <b>Space/Click</b> (hold stream). <code>T</code> toggle autofire. Fire rate <code>[</code>/<code>]</code>. 
+    λ presets <code>1..5</code>, fine <code>-</code>/<code>=</code>, <code>G</code> drain, <code>P</code> pause, <code>N</code> next, <code>R</code> retry. 
+    <code>C</code> center, <code>V</code> beacon, <code>F</code> ping, <code>D</code> debug.
+  </div>
+  <canvas id="c"></canvas>
+</div>
+
+<script>
+(() => {
+  // ===============================================================
+  // Engine-ish core
+  // ===============================================================
+  const cellW = 12, cellH = 20;
+  let cols = 100, rows = 44;
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.textBaseline = 'top';
+  ctx.font = '18px Courier New, monospace';
+
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const randRange=(a,b)=>a + Math.random()*(b-a);
+
+  function fitCanvas(){
+    const W = window.innerWidth;
+    const H = window.innerHeight - document.getElementById('ui').offsetHeight;
+    cols = Math.max(60, Math.floor(W / cellW));
+    rows = Math.max(30, Math.floor(H / cellH));
+    canvas.width = cols * cellW;
+    canvas.height = rows * cellH;
+  }
+  window.addEventListener('resize', ()=>{ fitCanvas(); Game.centerPlayer(); pingTimer=1.0; });
+  fitCanvas();
+
+  function wavelengthToColor(nm){
+    const clamped = clamp(nm, 200, 800);
+    const x = Math.min(1, Math.max(0, (clamped - 380) / (700 - 380)));
+    const hue = (1 - x) * 270, s = 0.65, v = 1.0, c = v*s;
+    const h = hue / 60, xcol = c * (1 - Math.abs((h % 2) - 1));
+    let r=0,g=0,b=0;
+    if (0<=h && h<1){ r=c; g=xcol; b=0; }
+    else if (1<=h && h<2){ r=xcol; g=c; b=0; }
+    else if (2<=h && h<3){ r=0; g=c; b=xcol; }
+    else if (3<=h && h<4){ r=0; g=xcol; b=c; }
+    else if (4<=h && h<5){ r=xcol; g=0; b=c; }
+    else { r=c; g=0; b=xcol; }
+    const m=v-c; return { r:Math.round((r+m)*255), g:Math.round((g+m)*255), b:Math.round((b+m)*255) };
+  }
+  const ramp=" .:-=+*#@%"; const rampLen=ramp.length;
+
+  // ===============================================================
+  // Game state
+  // ===============================================================
+  const Game = {
+    state: 'playing', // playing | paused | complete | failed
+    time: 0,
+    levelIndex: 0,
+    bondsBroken: 0,
+    stats: { breaksByLabel:{}, preciseBreaks:0 },
+
+    player: {
+      x: Math.floor(cols*0.5), y: Math.floor(rows*0.6), angle: 0,
+      lambdaNm: 600, moveSpeed: 22,
+      fireHeld:false, fireLatched:false, fireRate: 24, fireCooldown:0, // faster default fire
+      drainOn:true, batteryMax:100, battery:100, rechargePerSec:10
+    },
+
+    centerPlayer(){ this.player.x=Math.floor(cols*0.5); this.player.y=Math.floor(rows*0.6); },
+
+    photons: [], emissions: [], molecules: [],
+
+    config: { maxPhotons: 150, emissionLife: 1.25, asciiThreshold: 0.06 }
+  };
+
+  // Missions with goals
+  // Kinds:
+  // - break_total: {kind:'break_total', count:N}
+  // - break_label: {kind:'break_label', label:'H₂', count:N}
+  // - match_within_nm: {kind:'match_within_nm', tol:Δnm, count:N} where λ ≈ 1240/E_bond
+  // - time_limit: {kind:'time_limit', seconds:S} (fails if exceeded)
+  const MISSIONS = [
+    {
+      name: 'Rookie Tech',
+      desc: 'Warm up the optics. Break some easy bonds.',
+      goals: [
+        {kind:'break_total', count:6},
+        {kind:'break_label', label:'A₂', count:2}
+      ],
+      spawn: {count:8, speedScale:1.0}
+    },
+    {
+      name: 'UV Caution',
+      desc: 'Handle higher-energy targets without frying the bench.',
+      goals: [
+        {kind:'break_label', label:'H₂', count:3},
+        {kind:'match_within_nm', tol:20, count:3}
+      ],
+      spawn: {count:9, speedScale:1.15}
+    },
+    {
+      name: 'Reactive Mix',
+      desc: 'Busy chamber. Work fast and precise.',
+      goals: [
+        {kind:'break_total', count:10},
+        {kind:'break_label', label:'O₂', count:2},
+        {kind:'break_label', label:'CO', count:2},
+        {kind:'time_limit', seconds:90}
+      ],
+      spawn: {count:12, speedScale:1.25}
+    }
+  ];
+
+  // ===============================================================
+  // Input
+  // ===============================================================
+  const KEYS = new Set();
+  window.addEventListener('keydown', e => {
+    KEYS.add(e.key);
+    if (e.key===' ') { fireSingle(); Game.player.fireHeld=true; e.preventDefault(); }
+    if (e.key==='t'||e.key==='T') Game.player.fireLatched=!Game.player.fireLatched;
+    if (e.key==='g'||e.key==='G') Game.player.drainOn=!Game.player.drainOn;
+    if (e.key==='1') Game.player.lambdaNm=700;
+    if (e.key==='2') Game.player.lambdaNm=600;
+    if (e.key==='3') Game.player.lambdaNm=500;
+    if (e.key==='4') Game.player.lambdaNm=400;
+    if (e.key==='5') Game.player.lambdaNm=320;
+    if (e.key==='-'||e.key==='_') Game.player.lambdaNm=clamp(Game.player.lambdaNm+5,200,800);
+    if (e.key==='='||e.key==='+') Game.player.lambdaNm=clamp(Game.player.lambdaNm-5,200,800);
+    if (e.key==='[') Game.player.fireRate = clamp(Game.player.fireRate - 2, 4, 48);
+    if (e.key===']') Game.player.fireRate = clamp(Game.player.fireRate + 2, 4, 48);
+    if (e.key==='r'||e.key==='R') resetLevel();
+    if (e.key==='c'||e.key==='C') { Game.centerPlayer(); pingTimer=1.0; }
+    if (e.key==='f'||e.key==='F') pingTimer = 1.0;
+    if (e.key==='d'||e.key==='D') debug = !debug;
+    if (e.key==='p'||e.key==='P') togglePause();
+    if (e.key==='n'||e.key==='N') if (Game.state!=='playing') nextLevel();
+    if (e.key==='v'||e.key==='V') beacon = !beacon;
+  });
+  window.addEventListener('keyup', e => { KEYS.delete(e.key); if (e.key===' ') Game.player.fireHeld=false; });
+
+  let mouseCell={x:0,y:0};
+  canvas.addEventListener('mousemove', e => {
+    const rect=canvas.getBoundingClientRect();
+    mouseCell.x = Math.floor((e.clientX-rect.left)/cellW);
+    mouseCell.y = Math.floor((e.clientY-rect.top)/cellH);
+    const ax = mouseCell.x - Game.player.x, ay = mouseCell.y - Game.player.y;
+    if (ax||ay) Game.player.angle = Math.atan2(ay, ax);
+  });
+  canvas.addEventListener('mousedown', ()=>{ if(Game.state==='playing'){ fireToward(mouseCell.x,mouseCell.y); Game.player.fireHeld=true; } });
+  window.addEventListener('mouseup', ()=>{ Game.player.fireHeld=false; });
+  canvas.addEventListener('click', ()=>{ if(Game.state==='playing') fireToward(mouseCell.x,mouseCell.y); });
+
+  // ===============================================================
+  // Movement
+  // ===============================================================
+  function movePlayer(dt){
+    if (Game.state!=='playing') return;
+    let mx=0,my=0;
+    if (KEYS.has('w')||KEYS.has('W')) my -= 1;
+    if (KEYS.has('s')||KEYS.has('S')) my += 1;
+    if (KEYS.has('a')||KEYS.has('A')) mx -= 1;
+    if (KEYS.has('d')||KEYS.has('D')) mx += 1;
+    if (mx||my){
+      const n = Math.hypot(mx,my) || 1;
+      Game.player.x = clamp(Game.player.x + (mx/n)*Game.player.moveSpeed*dt, 1, cols-2);
+      Game.player.y = clamp(Game.player.y + (my/n)*Game.player.moveSpeed*dt, 1, rows-2);
+    }
+  }
+
+  // ===============================================================
+  // Physics helpers
+  // ===============================================================
+  function speedScale(nm){
+    const LMIN=200, LMAX=800;
+    const inv = 1/clamp(nm,LMIN,LMAX);
+    const invMin=1/LMIN, invMax=1/LMAX;
+    return 1.0 + 0.7 * ((inv - invMax) / (invMin - invMax));
+  }
+  function shotCost(nm){
+    const inv = 1/clamp(nm,200,800);
+    const invMin = 1/800, invMax = 1/200;
+    const t = (inv - invMin) / (invMax - invMin);
+    return 0.14 + 0.85*clamp(t,0,1); // slightly cheaper to support higher RoF
+  }
+  function segDist(ax,ay,bx,by,cx,cy){
+    const dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy+1e-6;
+    const t=clamp(((cx-ax)*dx + (cy-ay)*dy)/len2, 0, 1);
+    const px=ax+t*dx, py=ay+t*dy;
+    return Math.hypot(px-cx, py-cy);
+  }
+  function nmFromEV(E){ return 1240 / Math.max(0.1, E); }
+
+  // ===============================================================
+  // Entities
+  // ===============================================================
+  class Photon{
+    constructor(x,y,angle,nm){ this.x=x; this.y=y; this.px=x; this.py=y;
+      const v=40; this.vx=Math.cos(angle)*v; this.vy=Math.sin(angle)*v; this.nm=nm; this.age=0; this.life=4; }
+    step(dt){ this.px=this.x; this.py=this.y; this.x+=this.vx*dt; this.y+=this.vy*dt; this.age+=dt; }
+    alive(){ return this.age<=this.life && this.x>=0 && this.x<cols && this.y>=0 && this.y<rows; }
+  }
+  class Emission{
+    constructor(x,y,nm,amp=1){ this.x=x; this.y=y; this.nm=nm; this.t=0;
+      this.life=Game.config.emissionLife; this.waveSpeed=14*speedScale(nm);
+      this.ringSigma=0.75; this.coreSigma=0.5; this.glowReach=10; this.glowStrength=0.35; this.amp=amp; }
+    step(dt){ this.t+=dt; } alive(){ return this.t<this.life; }
+    bboxContainsCell(cx,cy){ const r = Math.max(3, this.waveSpeed*this.t + 4); return Math.abs(cx-this.x)<=r && Math.abs(cy-this.y)<=r; }
+    sample(cx,cy){ const dx=cx-this.x, dy=cy-this.y, d=Math.hypot(dx,dy), w=this.waveSpeed*this.t;
+      const ring=Math.exp(-((d-w)*(d-w))/(2*this.ringSigma*this.ringSigma));
+      const core=Math.exp(-(d*d)/(2*this.coreSigma*this.coreSigma));
+      const glow=this.glowStrength*Math.exp(-d/this.glowReach);
+      const env=Math.max(0,1-(this.t/this.life));
+      const shimmer=0.75+0.25*Math.sin(this.t*7 + d*2);
+      return Math.min(1,(0.7*ring+0.6*core+glow)*env*shimmer)*this.amp; }
+  }
+  const MOLECULE_TYPES=[
+    { label:'A₂', Ebond_eV:3.0, len:5, speed:6 },
+    { label:'H₂', Ebond_eV:4.5, len:5, speed:7 },
+    { label:'O₂', Ebond_eV:5.1, len:6, speed:5.5 },
+    { label:'CO', Ebond_eV:3.6, len:6, speed:6.5 },
+  ];
+  class Molecule{
+    constructor(kind,x,y,vx,vy){ this.kind=kind; this.cx=x; this.cy=y; this.vx=vx; this.vy=vy;
+      this.angle=Math.random()*Math.PI*2; this.angVel=(Math.random()-0.5)*0.6; this.len=kind.len; this.emitNm = nmFromEV(kind.Ebond_eV); }
+    ends(){ const dx=Math.cos(this.angle), dy=Math.sin(this.angle);
+      return { ax:this.cx-dx*this.len*0.5, ay:this.cy-dy*this.len*0.5, bx:this.cx+dx*this.len*0.5, by:this.cy+dy*this.len*0.5 }; }
+    step(dt){ this.cx+=this.vx*dt; this.cy+=this.vy*dt; this.angle+=this.angVel*dt;
+      if (this.cx<2||this.cx>cols-3){ this.vx*=-1; this.cx=clamp(this.cx,2,cols-3); }
+      if (this.cy<2||this.cy>rows-3){ this.vy*=-1; this.cy=clamp(this.cy,2,rows-3); } }
+    draw(){
+      const e=this.ends(), dx=e.bx-e.ax, dy=e.by-e.ay, steps=Math.max(2, Math.ceil(Math.hypot(dx,dy)));
+      const tint=wavelengthToColor(this.emitNm); ctx.fillStyle=`rgba(${tint.r},${tint.g},${tint.b},0.35)`;
+      for (let i=0;i<=steps;i++){ const x=Math.round(e.ax+dx*(i/steps)), y=Math.round(e.ay+dy*(i/steps));
+        if (x>=0&&x<cols&&y>=0&&y<rows) ctx.fillText('-', x*cellW, y*cellH); }
+      ctx.fillStyle='rgba(150,200,255,0.9)';
+      ctx.fillText('o', Math.round(e.ax)*cellW, Math.round(e.ay)*cellH);
+      ctx.fillText('o', Math.round(e.bx)*cellW, Math.round(e.by)*cellH);
+      ctx.fillStyle='rgba(150,200,255,0.6)';
+      ctx.fillText(`${this.kind.label}[${this.kind.Ebond_eV.toFixed(1)}eV→${Math.round(this.emitNm)}nm]`, Math.round(this.cx-3)*cellW, Math.round(this.cy-2)*cellH);
+    }
+  }
+
+  // ===============================================================
+  // Spawning & Missions
+  // ===============================================================
+  function spawnMolecules(n=6, speedK=1){
+    Game.molecules.length=0;
+    for (let i=0;i<n;i++){
+      const k=MOLECULE_TYPES[Math.floor(Math.random()*MOLECULE_TYPES.length)];
+      const x=randRange(5, cols-5), y=randRange(4, rows-4);
+      const ang=Math.random()*Math.PI*2, sp=k.speed*(0.7+0.6*Math.random())*speedK;
+      Game.molecules.push(new Molecule(k,x,y, Math.cos(ang)*sp, Math.sin(ang)*sp));
+    }
+  }
+  function loadMission(idx){
+    Game.levelIndex = idx % MISSIONS.length;
+    const M = MISSIONS[Game.levelIndex];
+    Game.bondsBroken = 0;
+    Game.stats.breaksByLabel = {};
+    Game.stats.preciseBreaks = 0;
+    Game.time = 0;
+    Game.state = 'playing';
+    spawnMolecules(M.spawn.count, M.spawn.speedScale);
+    Game.centerPlayer();
+  }
+  function nextLevel(){ loadMission(Game.levelIndex+1); }
+  function resetLevel(){ loadMission(Game.levelIndex); }
+
+  // ===============================================================
+  // Interaction & mission progress
+  // ===============================================================
+  function fireSingle(){
+    if (Game.state!=='playing') return;
+    if (Game.player.drainOn && Game.player.battery<=0) return;
+    Game.photons.push(new Photon(Game.player.x, Game.player.y, Game.player.angle, Game.player.lambdaNm));
+    while (Game.photons.length>Game.config.maxPhotons) Game.photons.shift();
+    if (Game.player.drainOn) Game.player.battery=Math.max(0, Game.player.battery - shotCost(Game.player.lambdaNm));
+  }
+  function fireToward(cx,cy){
+    if (Game.state!=='playing') return;
+    const ang=Math.atan2(cy-Game.player.y, cx-Game.player.x);
+    Game.photons.push(new Photon(Game.player.x, Game.player.y, ang, Game.player.lambdaNm));
+    while (Game.photons.length>Game.config.maxPhotons) Game.photons.shift();
+    if (Game.player.drainOn) Game.player.battery=Math.max(0, Game.player.battery - shotCost(Game.player.lambdaNm));
+  }
+  function tryBreakWithPhoton(p){
+    for (let i=0;i<Game.molecules.length;i++){
+      const m=Game.molecules[i], e=m.ends();
+      const d=segDist(p.px,p.py,p.x,p.y, (e.ax+e.bx)/2, (e.ay+e.by)/2);
+      if (d<=1.0){
+        const Eph=1240/p.nm;
+        if (Eph>=m.kind.Ebond_eV){
+          const nx=(e.ax+e.bx)/2, ny=(e.ay+e.by)/2;
+          Game.emissions.push(new Emission(nx,ny, nmFromEV(m.kind.Ebond_eV), 1.0));
+          Game.emissions.push(new Emission(e.ax, e.ay, p.nm, 0.35));
+          Game.emissions.push(new Emission(e.bx, e.by, p.nm, 0.35));
+          Game.molecules.splice(i,1);
+          // Stats
+          Game.bondsBroken++;
+          Game.stats.breaksByLabel[m.kind.label] = (Game.stats.breaksByLabel[m.kind.label]||0)+1;
+          const lambdaMatch = nmFromEV(m.kind.Ebond_eV);
+          if (Math.abs(p.nm - lambdaMatch) <= 20) Game.stats.preciseBreaks++; // base tolerance for match_within default
+          // Mission check
+          checkGoalsProgress();
+        }else{
+          const hx=(e.ax+e.bx)/2, hy=(e.ay+e.by)/2;
+          Game.emissions.push(new Emission(hx,hy, p.nm, 0.25));
+        }
+        return true;
+      }
+    }
+    // boundary scatter
+    if (p.x<1 || p.x>cols-2 || p.y<1 || p.y>rows-2){
+      Game.emissions.push(new Emission(clamp(p.x,1,cols-2), clamp(p.y,1,rows-2), p.nm, 0.25));
+      return true;
+    }
+    return false;
+  }
+
+  function goalsStatus(){
+    const M = MISSIONS[Game.levelIndex];
+    let allOk = true, failed=false;
+    const lines = [];
+    const elapsed = Game.time;
+    for (const g of M.goals){
+      if (g.kind==='break_total'){
+        const ok = Game.bondsBroken >= g.count; allOk = allOk && ok;
+        lines.push([ok, `Break total: ${Math.min(Game.bondsBroken,g.count)}/${g.count}`]);
+      } else if (g.kind==='break_label'){
+        const cur = Game.stats.breaksByLabel[g.label] || 0;
+        const ok = cur >= g.count; allOk = allOk && ok;
+        lines.push([ok, `Break ${g.label}: ${Math.min(cur,g.count)}/${g.count}`]);
+      } else if (g.kind==='match_within_nm'){
+        const cur = Game.stats.preciseBreaks || 0;
+        const ok = cur >= g.count; allOk = allOk && ok;
+        lines.push([ok, `Match λ±${g.tol}nm: ${Math.min(cur,g.count)}/${g.count}`]);
+      } else if (g.kind==='time_limit'){
+        const remain = Math.max(0, g.seconds - elapsed);
+        if (elapsed > g.seconds){ failed = true; allOk = false; }
+        lines.push([!failed, `Time ≤ ${g.seconds}s  (${remain.toFixed(1)}s left)`]);
+      }
+    }
+    return {allOk, failed, lines};
+  }
+  function checkGoalsProgress(){
+    const st = goalsStatus();
+    if (st.failed) Game.state='failed';
+    else if (st.allOk) Game.state='complete';
+  }
+
+  // ===============================================================
+  // Visibility helpers
+  // ===============================================================
+  let pingTimer = 0, beacon=true, debug=false;
+  function drawEmitterMarker(dt){
+    const ex=Math.round(Game.player.x), ey=Math.round(Game.player.y);
+    // thick neon strokes
+    ctx.strokeStyle='rgba(0,255,180,0.85)'; ctx.lineWidth=cellW*0.8;
+    ctx.beginPath(); ctx.moveTo((ex-1.2)*cellW,(ey)*cellH+cellH/2); ctx.lineTo((ex+1.2)*cellW,(ey)*cellH+cellH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo((ex)*cellW+cellW/2,(ey-1.2)*cellH); ctx.lineTo((ex)*cellW+cellW/2,(ey+1.2)*cellH); ctx.stroke();
+    // solid core block
+    ctx.fillStyle='rgba(255,255,255,0.96)'; ctx.fillRect(ex*cellW, ey*cellH, cellW, cellH);
+    // text overlay
+    ctx.fillStyle='rgba(0,0,0,0.9)'; ctx.fillText('@', ex*cellW, ey*cellH);
+    ctx.fillStyle='rgba(255,255,255,0.98)'; ctx.fillText('YOU', Math.max(0,ex-1)*cellW, Math.max(0,ey-2)*cellH);
+    // rotating beacon
+    if (beacon){ const r=6, ang=Date.now()*0.004, tipx=Math.round(ex+Math.cos(ang)*r), tipy=Math.round(ey+Math.sin(ang)*r);
+      ctx.fillStyle='rgba(255,255,0,0.97)'; ctx.fillText('^', tipx*cellW, tipy*cellH);
+      for (let a=0;a<Math.PI*2; a+=Math.PI/3){ const px=Math.round(ex+Math.cos(a)*(r-2)), py=Math.round(ey+Math.sin(a)*(r-2)); ctx.fillText('*', px*cellW, py*cellH); } }
+    // ping
+    if (pingTimer>0){ pingTimer-=dt; const phase=1-Math.max(0,pingTimer/1.0), rad=4+phase*12; ctx.fillStyle='rgba(255,255,255,0.9)';
+      for (let a=0;a<Math.PI*2; a+=0.28){ const px=Math.round(ex+Math.cos(a)*rad), py=Math.round(ey+Math.sin(a)*rad); if(px>=0&&px<cols&&py>=0&&py<rows) ctx.fillText('o', px*cellW, py*cellH); } }
+  }
+
+  // ===============================================================
+  // Level lifecycle
+  // ===============================================================
+  function togglePause(){ Game.state = (Game.state==='paused' ? 'playing' : (Game.state==='playing' ? 'paused' : Game.state)); }
+
+  // Boot
+  loadMission(0);
+
+  // ===============================================================
+  // Loop
+  // ===============================================================
+  let prev=performance.now();
+  function frame(now){
+    const dt=Math.min(0.033,(now-prev)/1000); prev=now;
+    if (Game.state==='playing') Game.time += dt;
+
+    movePlayer(dt);
+
+    // firing
+    const firing = (Game.player.fireHeld || Game.player.fireLatched) && (Game.player.drainOn ? Game.player.battery>0 : true);
+    Game.player.fireCooldown -= dt;
+    if (firing && Game.player.fireCooldown<=0){ fireSingle(); Game.player.fireCooldown = 1 / Game.player.fireRate; }
+    if (!firing && Game.player.drainOn){ Game.player.battery=Math.min(Game.player.batteryMax, Game.player.battery + Game.player.rechargePerSec*dt); }
+
+    // Step entities
+    for (let i=Game.photons.length-1;i>=0;i--){
+      const p=Game.photons[i]; p.step(dt);
+      const hit=tryBreakWithPhoton(p);
+      if (hit || !p.alive()) Game.photons.splice(i,1);
+    }
+    for (const m of Game.molecules) m.step(dt);
+    for (let i=Game.emissions.length-1;i>=0;i--){ const e=Game.emissions[i]; e.step(dt); if (!e.alive()) Game.emissions.splice(i,1); }
+
+    // Draw
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    const tint=wavelengthToColor(Game.player.lambdaNm); const rgba=(a=1)=>`rgba(${tint.r},${tint.g},${tint.b},${a})`;
+
+    // Emission field
+    for (let y=0;y<rows;y++){ for (let x=0;x<cols;x++){
+      let amp=0; const cx=x+0.5, cy=y+0.5;
+      for (const e of Game.emissions){ if (e.bboxContainsCell(cx,cy)) amp=Math.max(amp, e.sample(cx,cy)); }
+      if (amp>Game.config.asciiThreshold){
+        const idx=Math.min(rampLen-1, Math.max(0, Math.floor(amp*(rampLen-1))));
+        ctx.fillStyle=rgba(Math.min(1, 0.18 + amp*0.95)); ctx.fillText(ramp[idx], x*cellW, y*cellH);
+      }
+    }}
+
+    // Molecules
+    for (const m of Game.molecules) m.draw();
+
+    // Aim preview (dots)
+    const dx=Math.cos(Game.player.angle), dy=Math.sin(Game.player.angle); ctx.fillStyle='rgba(255,255,255,0.28)';
+    for (let i=1;i<cols*0.8;i+=2){ const nx=Math.round(Game.player.x+dx*i), ny=Math.round(Game.player.y+dy*i); if(nx<1||nx>=cols-1||ny<1||ny>=rows-1) break; ctx.fillText('.', nx*cellW, ny*cellH); }
+
+    // Emitter + photons
+    drawEmitterMarker(dt);
+    for (const p of Game.photons){ ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fillText('*', Math.round(p.x)*cellW, Math.round(p.y)*cellH); }
+
+    // HUD left
+    function textL(x,y,s,style){ ctx.fillStyle=style; ctx.fillText(s, x*cellW, y*cellH); }
+    const nm=Math.round(Game.player.lambdaNm), Eph=(1240/Math.max(1,nm)).toFixed(2), bar=Math.floor((Game.player.battery/Game.player.batteryMax)*20);
+    textL(1,1,`λ=${nm} nm  E=${Eph} eV  move: WASD  aim: mouse  fire: click/space  [T]oggle auto  [ [ ] ] fireRate=${Game.player.fireRate}/s`, 'rgba(180,220,255,0.9)');
+    textL(1,2,`battery [${'#'.repeat(bar)}${'.'.repeat(20-bar)}] ${Math.max(0,Math.round(Game.player.battery))}/${Game.player.batteryMax}   mol:${Game.molecules.length}  photons:${Game.photons.length}  emits:${Game.emissions.length}`, 'rgba(160,200,255,0.85)');
+
+    // Goals panel right
+    drawGoalsPanel();
+
+    // Overlays
+    const M = MISSIONS[Game.levelIndex];
+    if (Game.state==='paused'){
+      overlayBox(`PAUSED\n${M.name}\n${M.desc}\nP to resume · R retry`);
+    }
+    if (Game.state==='complete'){
+      overlayBox(`MISSION CLEARED\n${M.name}\nTime: ${Game.time.toFixed(1)}s\nN: next · R: replay`);
+    }
+    if (Game.state==='failed'){
+      overlayBox(`MISSION FAILED\n${M.name}\nTime: ${Game.time.toFixed(1)}s\nR: retry`);
+    }
+    if (debug){
+      textL(1,rows-2,`debug: canvas=${canvas.width}x${canvas.height} grid=${cols}x${rows}`, 'rgba(255,255,255,0.7)');
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  function drawGoalsPanel(){
+    const M = MISSIONS[Game.levelIndex];
+    const st = goalsStatus();
+    const lines = st.lines.map(([ok,msg])=>`${ok?'[✓]':'[ ]'} ${msg}`);
+    const title = `GOALS — ${M.name}`;
+    const w = Math.max(title.length, ...lines.map(s=>s.length)) + 4;
+    const h = lines.length + 3;
+    const x = Math.max(1, cols - w - 2);
+    const y = 1;
+    // box
+    ctx.fillStyle='rgba(15,25,35,0.9)'; ctx.fillRect(x*cellW, y*cellH, w*cellW, h*cellH);
+    ctx.fillStyle='rgba(255,255,255,0.7)';
+    for (let i=0;i<w;i++){ ctx.fillText('-', (x+i)*cellW, y*cellH); ctx.fillText('-', (x+i)*cellW, (y+h-1)*cellH); }
+    for (let j=0;j<h;j++){ ctx.fillText('|', x*cellW, (y+j)*cellH); ctx.fillText('|', (x+w-1)*cellW, (y+j)*cellH); }
+    ctx.fillText(title, (x+2)*cellW, (y+1)*cellH);
+    lines.forEach((s,i)=> ctx.fillText(s, (x+2)*cellW, (y+2+i)*cellH));
+  }
+
+  function overlayBox(msg){
+    const lines = msg.split('\n');
+    const w = Math.max(...lines.map(s=>s.length)) + 4;
+    const h = lines.length + 2;
+    const x = Math.floor(cols/2 - w/2);
+    const y = Math.floor(rows/2 - h/2);
+    ctx.fillStyle='rgba(20,30,40,0.92)'; ctx.fillRect(x*cellW, y*cellH, w*cellW, h*cellH);
+    ctx.fillStyle='rgba(255,255,255,0.75)';
+    for (let i=0;i<w;i++){ ctx.fillText('-', (x+i)*cellW, y*cellH); ctx.fillText('-', (x+i)*cellW, (y+h-1)*cellH); }
+    for (let j=0;j<h;j++){ ctx.fillText('|', x*cellW, (y+j)*cellH); ctx.fillText('|', (x+w-1)*cellW, (y+j)*cellH); }
+    lines.forEach((s,i)=> ctx.fillText(s, (x+2)*cellW, (y+1+i)*cellH));
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
