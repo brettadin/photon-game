@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/abilities/gluon_bind.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/abilities/color_field.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/abilities/fusion_lock.gd" id="4"]
+
+[resource]
+script = ExtResource("1")
+id = "gluon"
+display_name = "Gluon"
+description = "Strong-force specialist. Binds allies together, locking down enemies with colourful tethers."
+mass = 0.0
+charge = 0.0
+stability = 0.7
+active_ability = ExtResource("2")
+passive_ability = ExtResource("3")
+ultimate_ability = ExtResource("4")

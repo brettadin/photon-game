@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/abilities/downward_smash.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/abilities/mass_anchor.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/abilities/baryon_wall.gd" id="4"]
+
+[resource]
+script = ExtResource("1")
+id = "down_quark"
+display_name = "Down Quark"
+description = "Heavier partner that soaks hits and helps assemble hadronic power moves. Slow but relentless." 
+mass = 0.0047
+charge = -0.3333
+stability = 0.9
+active_ability = ExtResource("2")
+passive_ability = ExtResource("3")
+ultimate_ability = ExtResource("4")
