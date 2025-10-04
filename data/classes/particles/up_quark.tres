@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/abilities/color_dash.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/abilities/fractional_charge.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/abilities/hadronize.gd" id="4"]
+
+[resource]
+script = ExtResource("1")
+id = "up_quark"
+display_name = "Up Quark"
+description = "Lightweight and evasive. Exploits fractional charge to dart through electromagnetic puzzles and set up combo finishers."
+mass = 0.0022
+charge = 0.6667
+stability = 0.95
+active_ability = ExtResource("2")
+passive_ability = ExtResource("3")
+ultimate_ability = ExtResource("4")

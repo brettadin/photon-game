@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/abilities/orbital_strike.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/abilities/ion_field.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/abilities/chain_discharge.gd" id="4"]
+
+[resource]
+script = ExtResource("1")
+id = "electron"
+display_name = "Electron"
+description = "Agile charged particle. Orbits objectives, darts through conduits, and chains lightning across foes."
+mass = 0.000511
+charge = -1.0
+stability = 1.0
+active_ability = ExtResource("2")
+passive_ability = ExtResource("3")
+ultimate_ability = ExtResource("4")

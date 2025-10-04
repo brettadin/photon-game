@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/abilities/higgs_mass_boost.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/abilities/inertial_field.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/abilities/higgs_resonance.gd" id="4"]
+
+[resource]
+script = ExtResource("1")
+id = "higgs_boson"
+display_name = "Higgs Boson"
+description = "Mythic support. Awakens latent mass, bolstering allies with inertia and resonance-fuelled empowerment."
+mass = 125.10
+charge = 0.0
+stability = 0.3
+active_ability = ExtResource("2")
+passive_ability = ExtResource("3")
+ultimate_ability = ExtResource("4")

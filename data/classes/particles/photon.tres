@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/abilities/photon_pulse.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/abilities/refraction_cloak.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/abilities/gamma_burst.gd" id="4"]
+
+[resource]
+script = ExtResource("1")
+id = "photon"
+display_name = "Photon"
+description = "Glass-cannon beam of light. Moves at blinding speed, solves optical puzzles, but pays with fragile defences."
+mass = 0.0
+charge = 0.0
+stability = 0.85
+active_ability = ExtResource("2")
+passive_ability = ExtResource("3")
+ultimate_ability = ExtResource("4")

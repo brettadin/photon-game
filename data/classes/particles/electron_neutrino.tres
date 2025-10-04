@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/abilities/phase_shift.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/abilities/ghost_walk.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/abilities/weak_flux.gd" id="4"]
+
+[resource]
+script = ExtResource("1")
+id = "electron_neutrino"
+display_name = "Electron Neutrino"
+description = "Ghostly infiltrator. Barely interacts, phasing through barriers while unleashing precise weak-force bursts."
+mass = 0.00001
+charge = 0.0
+stability = 1.0
+active_ability = ExtResource("2")
+passive_ability = ExtResource("3")
+ultimate_ability = ExtResource("4")
