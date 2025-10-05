@@ -1,0 +1,39 @@
+[
+  {
+    "id": "weak_force_resonance",
+    "display_name": "Weak Force Resonance",
+    "description": "Phase into the weak interaction nodes, amplifying debuffs while riding a temporary charge field.",
+    "themes": ["theme_weak_force"],
+    "prerequisites": ["theme_weak_force", "source_event"],
+    "weight": 1.1,
+    "effects": {
+      "profile": {
+        "bonuses": {"control": 0.3, "damage": 0.2},
+        "multipliers": {"control": 1.2},
+        "keywords": ["weak_alignment", "decay_specialist"]
+      },
+      "profile_duration": 60.0,
+      "ability_swap": {
+        "slot": "active",
+        "ability_id": "weak_charge_field",
+        "duration": 45.0
+      }
+    }
+  },
+  {
+    "id": "lepton_exchange_bond",
+    "display_name": "Lepton Exchange Bond",
+    "description": "Defeated weak-force enforcers drop neutrino contracts that reinforce shielding for decay-heavy builds.",
+    "themes": ["theme_weak_force"],
+    "prerequisites": ["theme_weak_force", "source_enemy"],
+    "weight": 0.95,
+    "effects": {
+      "profile": {
+        "bonuses": {"shield": 25.0, "control": 0.15},
+        "multipliers": {"damage": 1.08},
+        "keywords": ["lepton_flux", "weak_exchange"]
+      },
+      "profile_duration": 50.0
+    }
+  }
+]

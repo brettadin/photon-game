@@ -1,0 +1,39 @@
+[
+  {
+    "id": "positron_boon",
+    "display_name": "Positron Boon",
+    "description": "Annihilation-ready polarity surge that rewards negative charge bearers with burst mobility and radiant strikes.",
+    "themes": ["theme_antimatter"],
+    "prerequisites": ["requires_charge_negative", "theme_antimatter", "source_enemy"],
+    "weight": 1.2,
+    "effects": {
+      "profile": {
+        "bonuses": {"damage": 0.35, "speed": 30.0},
+        "multipliers": {"damage": 1.2},
+        "keywords": ["charge_inversion", "annihilation_combo"]
+      },
+      "profile_duration": 45.0,
+      "ability_swap": {
+        "slot": "active",
+        "ability_id": "gamma_burst",
+        "duration": 20.0
+      }
+    }
+  },
+  {
+    "id": "antimatter_trade_pact",
+    "display_name": "Antimatter Trade Pact",
+    "description": "Shop consortium stabilises exotic fuel flows, letting antimatter hunters bargain for sustained damage control.",
+    "themes": ["theme_antimatter"],
+    "prerequisites": ["theme_antimatter", "source_shop"],
+    "weight": 0.9,
+    "effects": {
+      "profile": {
+        "bonuses": {"damage": 0.15, "control": 0.25},
+        "multipliers": {"damage": 1.1},
+        "keywords": ["shop_synergy", "antimatter_supply"]
+      },
+      "profile_duration": 0.0
+    }
+  }
+]

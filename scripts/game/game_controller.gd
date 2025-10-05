@@ -5,6 +5,7 @@ const ParticleClassDefinition := preload("res://scripts/classes/particle_class.g
 const PlayerAvatar := preload("res://scripts/player/player_avatar.gd")
 const UnlockManager := preload("res://scripts/progression/unlock_manager.gd")
 const CharacterSelectScene := preload("res://scenes/ui/character_select.tscn")
+const BoonManager := preload("res://scripts/systems/boon_manager.gd")
 
 const ABILITY_SCRIPTS := {
     "color_dash": preload("res://scripts/abilities/color_dash.gd"),
@@ -78,13 +79,17 @@ const CLASS_LOADOUTS := {
 @export var show_selection_on_ready: bool = true
 
 signal run_started(class_data: Dictionary, particle_class: ParticleClassDefinition)
+signal boon_options_ready(source: StringName, options: Array)
+signal boon_applied(boon_id: StringName, source: StringName, details: Dictionary)
 
 var _unlock_manager := UnlockManager.new()
 var _selection_ui: Control
 var _player: PlayerAvatar
+var _boon_manager: BoonManager
 
 func _ready() -> void:
     _resolve_player()
+    _ensure_boon_manager()
     if show_selection_on_ready:
         open_character_select()
 
@@ -106,6 +111,9 @@ func _on_class_chosen(class_data: Dictionary) -> void:
     _resolve_player()
     if is_instance_valid(_player):
         _player.set_particle_class(particle_class)
+    _ensure_boon_manager()
+    if _boon_manager:
+        _boon_manager.on_run_started(class_data, particle_class)
     emit_signal("run_started", class_data, particle_class)
     if is_instance_valid(_selection_ui):
         _selection_ui.hide()
@@ -157,3 +165,54 @@ func _resolve_player() -> void:
     var node := get_node_or_null(player_path)
     if node and node is PlayerAvatar:
         _player = node
+        if _boon_manager:
+            _boon_manager.set_player(_player)
+
+func _ensure_boon_manager() -> void:
+    if _boon_manager:
+        if _player:
+            _boon_manager.set_player(_player)
+        return
+    _boon_manager = BoonManager.new()
+    _boon_manager.name = "BoonManager"
+    add_child(_boon_manager)
+    if _player:
+        _boon_manager.set_player(_player)
+    _boon_manager.boon_options_ready.connect(_on_boon_options_ready)
+    _boon_manager.boon_applied.connect(_on_boon_applied)
+
+func set_level_theme_tags(tags: Array) -> void:
+    _ensure_boon_manager()
+    if _boon_manager:
+        _boon_manager.set_active_theme_tags(tags)
+
+func register_enemy_boon_drop(enemy_context: Dictionary = {}) -> void:
+    _ensure_boon_manager()
+    if _boon_manager:
+        _boon_manager.roll_enemy_drop(enemy_context)
+
+func register_event_boon(event_context: Dictionary = {}) -> void:
+    _ensure_boon_manager()
+    if _boon_manager:
+        _boon_manager.roll_event_room(event_context)
+
+func register_shop_boons(shop_context: Dictionary = {}) -> void:
+    _ensure_boon_manager()
+    if _boon_manager:
+        _boon_manager.roll_shop_inventory(shop_context)
+
+func apply_boon(boon_id: StringName, source: StringName = &"manual", context: Dictionary = {}) -> Dictionary:
+    _ensure_boon_manager()
+    if _boon_manager:
+        return _boon_manager.apply_boon(boon_id, source, context)
+    return {}
+
+func clear_run_boons() -> void:
+    if _boon_manager:
+        _boon_manager.clear_all_boons()
+
+func _on_boon_options_ready(source: StringName, options: Array) -> void:
+    emit_signal("boon_options_ready", source, options)
+
+func _on_boon_applied(boon_id: StringName, source: StringName, details: Dictionary) -> void:
+    emit_signal("boon_applied", boon_id, source, details)
