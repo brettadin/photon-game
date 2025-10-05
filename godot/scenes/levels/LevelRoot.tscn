@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="2"]
@@ -8,6 +8,8 @@
 [ext_resource type="PackedScene" path="res://scenes/levels/chemistry_lab.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/levels/nuclear_lab.tscn" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/hazards/radiation_zone.tscn" id="8"]
+[ext_resource type="PackedScene" path="res://scenes/ui/RunHUD.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/molecule_crafter.tscn" id="10"]
 
 [sub_resource type="TileSet" id="TileSet_d2p3q"]
 tile_size = Vector2i(64, 64)
@@ -42,6 +44,8 @@ unique_name_in_owner = true
 script = ExtResource("2")
 player_path = NodePath("../Player")
 
+[node name="RunHUD" parent="." instance=ExtResource("9")]
+
 [node name="StageContent" type="Node2D" parent="."]
 unique_name_in_owner = true
 
@@ -69,4 +73,7 @@ position = Vector2(0, 320)
 [node name="Interactives" type="Node2D" parent="StageContent"]
 unique_name_in_owner = true
 groups = ["level_interactives"]
+
+[node name="MoleculeCrafter" parent="Interactives" instance=ExtResource("10")]
+position = Vector2(0, -320)
 
