@@ -30,7 +30,7 @@ var DEFAULT_ACTIONS := {
 
 func _ready() -> void:
     if _engine_input_map == null:
-        push_warning("InputMap autoload: Engine InputMap singleton is unavailable.")
+        push_warning("InputBindings autoload: Engine InputMap singleton is unavailable.")
         return
     apply_default_bindings()
 
@@ -50,8 +50,8 @@ func register_custom_action(action_name: StringName, events: Array) -> void:
     if _engine_input_map == null:
         return
     reset_action(action_name)
-    for event in events:
-        _engine_input_map.action_add_event(action_name, event)
+    for input_event in events:
+        _engine_input_map.action_add_event(action_name, input_event)
 
 func _register_action(action_name: StringName, definition: Dictionary) -> void:
     if _engine_input_map == null:
@@ -66,10 +66,10 @@ func _register_action(action_name: StringName, definition: Dictionary) -> void:
         button_event.button_index = int(button)
         _engine_input_map.action_add_event(action_name, button_event)
     for axis_data in definition.get("joypad_axes", []):
-        var axis_event := InputEventJoypadMotion.new()
-        axis_event.axis = int(axis_data.get("axis", JOY_AXIS_LEFT_X))
-        axis_event.axis_value = float(axis_data.get("value", 0.0))
-        _engine_input_map.action_add_event(action_name, axis_event)
+        var motion_event := InputEventJoypadMotion.new()
+        motion_event.axis = int(axis_data.get("axis", JOY_AXIS_LEFT_X))
+        motion_event.axis_value = float(axis_data.get("value", 0.0))
+        _engine_input_map.action_add_event(action_name, motion_event)
 
 func get_action_events(action_name: StringName) -> Array:
     if _engine_input_map == null:
