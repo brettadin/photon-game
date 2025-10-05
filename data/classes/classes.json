@@ -1,0 +1,257 @@
+{
+  "standard_model": {
+    "quarks": [
+      {
+        "id": "quark_up",
+        "display_name": "Up Quark",
+        "lore": "Lightweight member of the first-generation quark pair, excels at evasive manoeuvres while weaving colour charge bonds.",
+        "base_stats": {"mass_mev": 2.3, "charge": 0.666, "stability": 0.9, "spin": 0.5},
+        "ability_tags": ["agile_skirmisher", "color_binding", "baryon_synergy"]
+      },
+      {
+        "id": "quark_down",
+        "display_name": "Down Quark",
+        "lore": "Sturdy partner to the up quark that anchors hadronic combos and shoulders extra mass for team durability.",
+        "base_stats": {"mass_mev": 4.8, "charge": -0.333, "stability": 0.85, "spin": 0.5},
+        "ability_tags": ["baryon_synergy", "defense_anchor", "color_binding"]
+      },
+      {
+        "id": "quark_charm",
+        "display_name": "Charm Quark",
+        "lore": "Second-generation quark that dazzles with high-energy bursts before its unstable resonance collapses.",
+        "base_stats": {"mass_mev": 1275.0, "charge": 0.666, "stability": 0.35, "spin": 0.5},
+        "ability_tags": ["burst_damage", "unstable_decay", "color_binding"]
+      },
+      {
+        "id": "quark_strange",
+        "display_name": "Strange Quark",
+        "lore": "Quark aligned to eerie weak-force twists that inflict lingering status effects while juggling colour locks.",
+        "base_stats": {"mass_mev": 95.0, "charge": -0.333, "stability": 0.4, "spin": 0.5},
+        "ability_tags": ["status_decay", "debuff_specialist", "color_binding"]
+      },
+      {
+        "id": "quark_top",
+        "display_name": "Top Quark",
+        "lore": "Heaviest known quark whose catastrophic collapses fuel ultimate-scale strikes before it evaporates.",
+        "base_stats": {"mass_mev": 172900.0, "charge": 0.666, "stability": 0.1, "spin": 0.5},
+        "ability_tags": ["ultimate_overclock", "unstable_decay", "color_binding"]
+      },
+      {
+        "id": "quark_bottom",
+        "display_name": "Bottom Quark",
+        "lore": "Massive flavour tuned for gravity-laden finishers that reward careful timing of its rapid decay chain.",
+        "base_stats": {"mass_mev": 4180.0, "charge": -0.333, "stability": 0.15, "spin": 0.5},
+        "ability_tags": ["gravity_crush", "unstable_decay", "color_binding"]
+      }
+    ],
+    "leptons": [
+      {
+        "id": "lepton_electron",
+        "display_name": "Electron",
+        "lore": "Everyday lepton hero that zips through circuits, orbiting objectives with precision electric attacks.",
+        "base_stats": {"mass_mev": 0.511, "charge": -1.0, "stability": 0.95, "spin": 0.5},
+        "ability_tags": ["orbital_dash", "electric_tricks", "tech_interface"]
+      },
+      {
+        "id": "lepton_electron_neutrino",
+        "display_name": "Electron Neutrino",
+        "lore": "Ghostly infiltrator who phases through hazards, interacting only when and where it chooses.",
+        "base_stats": {"mass_mev": 0.000002, "charge": 0.0, "stability": 0.9, "spin": 0.5},
+        "ability_tags": ["phase_shift", "stealth_specialist", "weak_interaction"]
+      },
+      {
+        "id": "lepton_muon",
+        "display_name": "Muon",
+        "lore": "Heavy cousin of the electron delivering brutal impulse strikes before its fleeting life expires.",
+        "base_stats": {"mass_mev": 105.7, "charge": -1.0, "stability": 0.25, "spin": 0.5},
+        "ability_tags": ["burst_damage", "decay_timer", "electric_tricks"]
+      },
+      {
+        "id": "lepton_tau",
+        "display_name": "Tau",
+        "lore": "Ultra-massive lepton that weaponises gravitational dives and sacrificial detonations.",
+        "base_stats": {"mass_mev": 1776.9, "charge": -1.0, "stability": 0.1, "spin": 0.5},
+        "ability_tags": ["gravity_crush", "decay_timer", "berserker"]
+      }
+    ],
+    "bosons": [
+      {
+        "id": "boson_photon",
+        "display_name": "Photon",
+        "lore": "Massless courier of light whose instant travel and dazzling beams favour high-risk positioning.",
+        "base_stats": {"mass_mev": 0.0, "charge": 0.0, "stability": 1.0, "spin": 1.0},
+        "ability_tags": ["speed_blink", "light_control", "glass_cannon"]
+      },
+      {
+        "id": "boson_gluon",
+        "display_name": "Gluon",
+        "lore": "Strong-force avatar weaving allies together with unbreakable tethers and shielding bonds.",
+        "base_stats": {"mass_mev": 0.0, "charge": 0.0, "stability": 0.8, "spin": 1.0},
+        "ability_tags": ["binding_fields", "team_link", "color_binding"]
+      },
+      {
+        "id": "boson_w",
+        "display_name": "W Boson",
+        "lore": "Charged weak-force brute unleashing polarity-flipping blasts with punishing recoil.",
+        "base_stats": {"mass_mev": 80390.0, "charge": 1.0, "stability": 0.05, "spin": 1.0},
+        "ability_tags": ["charge_burst", "self_recoil", "weak_interaction"]
+      },
+      {
+        "id": "boson_z",
+        "display_name": "Z Boson",
+        "lore": "Neutral weak mediator channelling devastating area pulses at the cost of self-harm.",
+        "base_stats": {"mass_mev": 91190.0, "charge": 0.0, "stability": 0.05, "spin": 1.0},
+        "ability_tags": ["area_pulse", "self_recoil", "weak_interaction"]
+      },
+      {
+        "id": "boson_higgs",
+        "display_name": "Higgs Boson",
+        "lore": "Elusive mass-granter that amplifies allies by seeding temporary mass and resilience.",
+        "base_stats": {"mass_mev": 125090.0, "charge": 0.0, "stability": 0.5, "spin": 0.0},
+        "ability_tags": ["mass_boost", "support_aura", "rarity_event"]
+      }
+    ]
+  },
+  "periodic": {
+    "alkali_metals": [
+      {
+        "id": "element_lithium",
+        "display_name": "Lithium",
+        "lore": "Soft alkali scout that sparks volatile dashes and ignites terrain upon impact.",
+        "base_stats": {"atomic_mass": 6.94, "charge": 1.0, "stability": 0.7, "reactivity": 0.95},
+        "ability_tags": ["reactive_burst", "flammable_dash", "fragile_metal"]
+      },
+      {
+        "id": "element_sodium",
+        "display_name": "Sodium",
+        "lore": "Explosive frontline striker whose contact attacks erupt in caustic sprays when doused.",
+        "base_stats": {"atomic_mass": 22.99, "charge": 1.0, "stability": 0.6, "reactivity": 0.98},
+        "ability_tags": ["reactive_burst", "caustic_wash", "fragile_metal"]
+      },
+      {
+        "id": "element_potassium",
+        "display_name": "Potassium",
+        "lore": "Heavier alkali duelist blending poisonous lye strikes with chain reactions.",
+        "base_stats": {"atomic_mass": 39.10, "charge": 1.0, "stability": 0.55, "reactivity": 0.97},
+        "ability_tags": ["reactive_burst", "poison_lash", "fragile_metal"]
+      }
+    ],
+    "alkaline_earth_metals": [
+      {
+        "id": "element_magnesium",
+        "display_name": "Magnesium",
+        "lore": "Radiant support bruiser that burns white-hot to blind foes and kindle machinery.",
+        "base_stats": {"atomic_mass": 24.31, "charge": 2.0, "stability": 0.75, "reactivity": 0.8},
+        "ability_tags": ["radiant_fire", "blinding_flare", "steady_guard"]
+      },
+      {
+        "id": "element_calcium",
+        "display_name": "Calcium",
+        "lore": "Builder guardian forging calcium-rich barriers and reinforcing allies' structure.",
+        "base_stats": {"atomic_mass": 40.08, "charge": 2.0, "stability": 0.78, "reactivity": 0.7},
+        "ability_tags": ["radiant_fire", "fortify_builder", "steady_guard"]
+      }
+    ],
+    "chalcogens": [
+      {
+        "id": "element_oxygen",
+        "display_name": "Oxygen",
+        "lore": "Vital support catalyst that breathes fire into allies and revives dormant engines.",
+        "base_stats": {"atomic_mass": 16.00, "charge": -2.0, "stability": 0.85, "reactivity": 0.9},
+        "ability_tags": ["support_oxygenate", "flame_boost", "life_breath"]
+      },
+      {
+        "id": "element_sulfur",
+        "display_name": "Sulfur",
+        "lore": "Acrid controller spreading choking clouds and alchemical traps.",
+        "base_stats": {"atomic_mass": 32.06, "charge": -2.0, "stability": 0.7, "reactivity": 0.88},
+        "ability_tags": ["support_oxygenate", "poison_cloud", "alchemical_traps"]
+      }
+    ],
+    "halogens": [
+      {
+        "id": "element_fluorine",
+        "display_name": "Fluorine",
+        "lore": "Razor reactive striker that corrodes armour instantly and amplifies allied burns.",
+        "base_stats": {"atomic_mass": 19.00, "charge": -1.0, "stability": 0.4, "reactivity": 1.0},
+        "ability_tags": ["corrosive_cloud", "reactive_burst", "toxicity_mastery"]
+      },
+      {
+        "id": "element_chlorine",
+        "display_name": "Chlorine",
+        "lore": "Lingering gas assassin laying poisonous traps and dissolving barriers.",
+        "base_stats": {"atomic_mass": 35.45, "charge": -1.0, "stability": 0.5, "reactivity": 0.95},
+        "ability_tags": ["corrosive_cloud", "area_denial", "toxicity_mastery"]
+      },
+      {
+        "id": "element_iodine",
+        "display_name": "Iodine",
+        "lore": "Pungent debuffer sowing blindness and hexes from a distance.",
+        "base_stats": {"atomic_mass": 126.90, "charge": -1.0, "stability": 0.6, "reactivity": 0.85},
+        "ability_tags": ["corrosive_cloud", "vision_hex", "toxicity_mastery"]
+      }
+    ],
+    "noble_gases": [
+      {
+        "id": "element_helium",
+        "display_name": "Helium",
+        "lore": "Playful uplift specialist that grants levitation and laughter to disarm foes.",
+        "base_stats": {"atomic_mass": 4.00, "charge": 0.0, "stability": 0.95, "reactivity": 0.05},
+        "ability_tags": ["support_inert", "levitation_aura", "crowd_confuse"]
+      },
+      {
+        "id": "element_neon",
+        "display_name": "Neon",
+        "lore": "Luminous tactician illuminating arenas and cloaking allies in dazzling veils.",
+        "base_stats": {"atomic_mass": 20.18, "charge": 0.0, "stability": 0.96, "reactivity": 0.05},
+        "ability_tags": ["support_inert", "light_control", "crowd_confuse"]
+      },
+      {
+        "id": "element_argon",
+        "display_name": "Argon",
+        "lore": "Stoic protector projecting inert shields that insulate allies from harm.",
+        "base_stats": {"atomic_mass": 39.95, "charge": 0.0, "stability": 0.97, "reactivity": 0.05},
+        "ability_tags": ["support_inert", "shielding_field", "light_control"]
+      }
+    ],
+    "transition_metals": [
+      {
+        "id": "element_iron",
+        "display_name": "Iron",
+        "lore": "Armoured juggernaut leveraging magnetic pulls to dominate the battlefield.",
+        "base_stats": {"atomic_mass": 55.85, "charge": 2.0, "stability": 0.8, "reactivity": 0.5},
+        "ability_tags": ["magnetic_control", "heavy_armor", "forge_mastery"]
+      },
+      {
+        "id": "element_copper",
+        "display_name": "Copper",
+        "lore": "Conductive support hacking devices and chaining electric discharges.",
+        "base_stats": {"atomic_mass": 63.55, "charge": 1.0, "stability": 0.82, "reactivity": 0.55},
+        "ability_tags": ["magnetic_control", "electric_tricks", "trade_bonus"]
+      },
+      {
+        "id": "element_gold",
+        "display_name": "Gold",
+        "lore": "Noble metal mastermind who manipulates wealth flows and resists corrosion.",
+        "base_stats": {"atomic_mass": 196.97, "charge": 1.0, "stability": 0.9, "reactivity": 0.3},
+        "ability_tags": ["magnetic_control", "luck_aura", "trade_bonus"]
+      }
+    ],
+    "radioactive_metals": [
+      {
+        "id": "element_uranium",
+        "display_name": "Uranium",
+        "lore": "Apocalyptic artillery that triggers chain fission blasts with lingering fallout.",
+        "base_stats": {"atomic_mass": 238.03, "charge": 6.0, "stability": 0.2, "reactivity": 0.92},
+        "ability_tags": ["radiation_aoe", "delayed_burst", "hazard_zone"]
+      },
+      {
+        "id": "element_thorium",
+        "display_name": "Thorium",
+        "lore": "Long-burn reactor tank feeding allies while radiating persistent damage fields.",
+        "base_stats": {"atomic_mass": 232.04, "charge": 4.0, "stability": 0.35, "reactivity": 0.85},
+        "ability_tags": ["radiation_aoe", "support_reactor", "hazard_zone"]
+      }
+    ]
+  }
+}
