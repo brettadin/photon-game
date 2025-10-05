@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/hazards/charged_field.tscn" id="1"]
+
+[node name="ElectromagnetismLab" type="Node2D"]
+
+[node name="ChargedFieldNorth" parent="." instance=ExtResource("1")]
+position = Vector2(0, -280)
+falloff_radius = 360.0
+
+[node name="ChargedFieldSouth" parent="." instance=ExtResource("1")]
+position = Vector2(0, 280)
+field_strength = 220.0
+attract_positive_charge = true
+
+[node name="ChargedFieldBridge" parent="." instance=ExtResource("1")]
+position = Vector2(360, 0)
+field_strength = 320.0
+falloff_radius = 280.0
