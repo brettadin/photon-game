@@ -1,0 +1,39 @@
+[
+  {
+    "id": "magnetosphere_attunement",
+    "display_name": "Magnetosphere Attunement",
+    "description": "Synchronise with the arena's magnetic flux to tighten control and bind foes in colourful flux ropes.",
+    "themes": ["theme_magnetism"],
+    "prerequisites": ["theme_magnetism", "source_event"],
+    "weight": 1.0,
+    "effects": {
+      "profile": {
+        "bonuses": {"control": 0.4, "damage": 0.1},
+        "multipliers": {"control": 1.25},
+        "keywords": ["magnetic_resonance", "field_mastery"]
+      },
+      "profile_duration": 0.0,
+      "ability_swap": {
+        "slot": "active",
+        "ability_id": "gluon_bind",
+        "duration": 35.0
+      }
+    }
+  },
+  {
+    "id": "ferromagnetic_dividend",
+    "display_name": "Ferromagnetic Dividend",
+    "description": "Inter-level brokers recycle magnetic scrap into shielding alloys, lending hardy evasion for the next fight.",
+    "themes": ["theme_magnetism"],
+    "prerequisites": ["theme_magnetism", "source_shop"],
+    "weight": 0.8,
+    "effects": {
+      "profile": {
+        "bonuses": {"defense": 0.3, "evasion": 0.2},
+        "multipliers": {"damage": 1.05},
+        "keywords": ["magnetic_plating", "shop_synergy"]
+      },
+      "profile_duration": 0.0
+    }
+  }
+]

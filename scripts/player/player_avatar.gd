@@ -2,6 +2,7 @@ extends CharacterBody2D
 class_name PlayerAvatar
 
 const StatusManager := preload("res://scripts/combat/status_manager.gd")
+const AbilityCatalog := preload("res://scripts/abilities/ability_catalog.gd")
 const LEPTON_IDS := {
     StringName("electron"): true,
     StringName("electron_neutrino"): true,
@@ -38,6 +39,7 @@ var _abilities := {}
 var _profiles := {}
 var _profile_sources := {}
 var _profile_uid := 0
+var _ability_overrides := {}
 
 func _enter_tree() -> void:
     _ensure_status_manager()
@@ -170,6 +172,7 @@ func _set_ability(slot: StringName, ability: ParticleAbility) -> void:
         ability.on_equip(self)
 
 func _clear_abilities() -> void:
+    clear_all_ability_overrides()
     for slot in _abilities:
         var ability: ParticleAbility = _abilities[slot]
         if ability:
@@ -197,6 +200,63 @@ func use_passive_refresh(context: Dictionary = {}) -> Dictionary:
 
 func use_ultimate(context: Dictionary = {}) -> Dictionary:
     return use_ability(&"ultimate", context)
+
+func override_ability(slot: StringName, ability_id: StringName, duration: float, source) -> bool:
+    slot = StringName(slot)
+    var ability := AbilityCatalog.create(StringName(ability_id))
+    if ability == null:
+        push_warning("PlayerAvatar: Unable to override ability %s" % ability_id)
+        return false
+    _clear_override_for_slot(slot)
+    var original := _abilities.get(slot, null)
+    _ability_overrides[slot] = {
+        "original": original,
+        "source": source,
+    }
+    _set_ability(slot, ability)
+    if duration > 0.0:
+        var timer := Timer.new()
+        timer.one_shot = true
+        timer.wait_time = duration
+        add_child(timer)
+        timer.timeout.connect(_on_ability_override_timeout.bind(slot, source, timer))
+        timer.start()
+        _ability_overrides[slot]["timer"] = timer
+    return true
+
+func remove_ability_override(source) -> void:
+    var slots := []
+    for slot in _ability_overrides.keys():
+        var data := _ability_overrides[slot]
+        if source == null or data.get("source") == source:
+            slots.append(slot)
+    for slot in slots:
+        _clear_override_for_slot(StringName(slot))
+
+func clear_all_ability_overrides() -> void:
+    remove_ability_override(null)
+
+func _clear_override_for_slot(slot: StringName) -> void:
+    if not _ability_overrides.has(slot):
+        return
+    var data := _ability_overrides[slot]
+    var timer: Timer = data.get("timer")
+    if is_instance_valid(timer):
+        timer.stop()
+        timer.queue_free()
+    var original: ParticleAbility = data.get("original")
+    _ability_overrides.erase(slot)
+    _set_ability(slot, original)
+
+func _on_ability_override_timeout(slot: StringName, source, timer: Timer) -> void:
+    if not _ability_overrides.has(slot):
+        timer.queue_free()
+        return
+    var data := _ability_overrides[slot]
+    if data.get("source") != source:
+        timer.queue_free()
+        return
+    _clear_override_for_slot(slot)
 
 func apply_stat_profile(source, profile: Dictionary) -> void:
     var key := _profile_key(source)
