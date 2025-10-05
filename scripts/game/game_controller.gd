@@ -6,7 +6,7 @@ const PlayerAvatar := preload("res://scripts/player/player_avatar.gd")
 const UnlockManager := preload("res://scripts/progression/unlock_manager.gd")
 const CodexDatabase := preload("res://scripts/data/codex_database.gd")
 const CharacterSelectScene := preload("res://scenes/ui/CharacterSelect.tscn")
-const CodexScene := preload("res://scenes/ui/Codex.tscn")
+const CodexScene := preload("res://scenes/ui/CodexViewer.tscn")
 const BoonManager := preload("res://scripts/systems/boon_manager.gd")
 const RunModifierSystem := preload("res://scripts/run/modifier_system.gd")
 
@@ -88,7 +88,7 @@ signal boon_applied(boon_id: StringName, source: StringName, details: Dictionary
 var _unlock_manager := UnlockManager.new()
 var _codex_database: CodexDatabase = CodexDatabase.new()
 var _selection_ui: Control
-var _codex_ui: Codex
+var _codex_ui: CodexViewer
 var _player: PlayerAvatar
 var _boon_manager: BoonManager
 var _run_modifier_system: RunModifierSystem

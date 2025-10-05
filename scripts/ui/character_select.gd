@@ -3,6 +3,7 @@ class_name CharacterSelect
 
 const ClassDatabase := preload("res://scripts/data/class_database.gd")
 const UnlockManager := preload("res://scripts/progression/unlock_manager.gd")
+const CodexService := preload("res://scripts/data/codex_service.gd")
 
 signal class_chosen(class_data: Dictionary)
 signal codex_requested
@@ -268,6 +269,12 @@ func _build_tooltip(entry: Dictionary) -> String:
     if not flavor.is_empty():
         lines.append("")
         lines.append(flavor)
+    var codex_notes := _collect_codex_notes(entry)
+    if not codex_notes.is_empty():
+        lines.append("")
+        lines.append("Codex Notes:")
+        for note in codex_notes:
+            lines.append("• %s" % note)
     return "\n".join(lines)
 
 func _format_charge(value: float) -> String:
@@ -276,3 +283,22 @@ func _format_charge(value: float) -> String:
     if value > 0.0:
         return "+%s" % _format_stat_value(value)
     return _format_stat_value(value)
+
+func _collect_codex_notes(entry: Dictionary) -> Array:
+    var notes: Array = []
+    var class_id := String(entry.get("id", ""))
+    if not class_id.is_empty():
+        notes.append_array(CodexService.highlights_for_class(class_id))
+    var category := String(entry.get("category", ""))
+    var group := String(entry.get("group", ""))
+    if not category.is_empty() and not group.is_empty():
+        notes.append_array(CodexService.highlights_for_group(category, group))
+    var unique: Array = []
+    for raw_note in notes:
+        var text := String(raw_note)
+        if text.is_empty():
+            continue
+        if text in unique:
+            continue
+        unique.append(text)
+    return unique

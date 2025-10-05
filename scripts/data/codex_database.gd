@@ -2,9 +2,11 @@ extends Node
 class_name CodexDatabase
 
 const DATA_DIRECTORY := "res://data/codex_entries"
+const ROOT_FILE := "res://data/codex_entries.json"
 
 var _entries: Dictionary = {}
 var _entries_by_unlock: Dictionary = {}
+var _entries_by_subject: Dictionary = {}
 
 func _init() -> void:
     _load_entries()
@@ -12,6 +14,9 @@ func _init() -> void:
 func _load_entries() -> void:
     _entries.clear()
     _entries_by_unlock.clear()
+    _entries_by_subject.clear()
+    if FileAccess.file_exists(ROOT_FILE):
+        _load_file(ROOT_FILE)
     var dir := DirAccess.open(DATA_DIRECTORY)
     if dir == null:
         push_warning("CodexDatabase: Unable to open directory %s" % DATA_DIRECTORY)
@@ -50,6 +55,7 @@ func _load_file(path: String) -> void:
         var entry := raw_entry.duplicate(true)
         _entries[id] = entry
         _register_unlock(entry)
+        _register_subjects(entry)
 
 func _register_unlock(entry: Dictionary) -> void:
     var unlock := entry.get("unlock", {})
@@ -90,6 +96,57 @@ func _append_unlock(key: String, entry: Dictionary) -> void:
     list.append(entry["id"])
     _entries_by_unlock[key] = list
 
+func _register_subjects(entry: Dictionary) -> void:
+    var subjects := entry.get("subjects", {})
+    if typeof(subjects) != TYPE_DICTIONARY:
+        return
+    for raw_type in subjects.keys():
+        var values = subjects[raw_type]
+        if typeof(values) == TYPE_NIL:
+            continue
+        var subject_type := String(raw_type)
+        var ids: Array = []
+        if typeof(values) == TYPE_ARRAY:
+            ids = values.duplicate()
+        else:
+            ids = [values]
+        for raw_id in ids:
+            var subject_id := String(raw_id)
+            if subject_id.is_empty():
+                continue
+            _append_subject_entry(subject_type, subject_id, String(entry.get("id", "")))
+
+func _append_subject_entry(subject_type: String, subject_id: String, entry_id: String) -> void:
+    if subject_type.is_empty() or entry_id.is_empty():
+        return
+    var canonical_type := _canonical_subject_type(subject_type)
+    if canonical_type.is_empty():
+        return
+    if not _entries_by_subject.has(canonical_type):
+        _entries_by_subject[canonical_type] = {}
+    var type_bucket: Dictionary = _entries_by_subject[canonical_type]
+    if not type_bucket.has(subject_id):
+        type_bucket[subject_id] = []
+    var entry_list: Array = type_bucket[subject_id]
+    if entry_id in entry_list:
+        return
+    entry_list.append(entry_id)
+    type_bucket[subject_id] = entry_list
+    _entries_by_subject[canonical_type] = type_bucket
+
+func _canonical_subject_type(raw_type: String) -> String:
+    match raw_type:
+        "classes", "class":
+            return "class"
+        "groups", "group":
+            return "group"
+        "abilities", "ability":
+            return "ability"
+        "hazards", "hazard":
+            return "hazard"
+        _:
+            return ""
+
 func get_entries() -> Dictionary:
     return _entries.duplicate(true)
 
@@ -97,6 +154,21 @@ func get_entry(id: String) -> Dictionary:
     if not _entries.has(id):
         return {}
     return _entries[id].duplicate(true)
+
+func get_entry_links(id: String) -> Dictionary:
+    var entry := get_entry(id)
+    if entry.is_empty():
+        return {}
+    var links := entry.get("links", {})
+    if typeof(links) != TYPE_DICTIONARY:
+        return {}
+    return links.duplicate(true)
+
+func get_entry_highlight(id: String) -> String:
+    var entry := get_entry(id)
+    if entry.is_empty():
+        return ""
+    return String(entry.get("highlight", ""))
 
 func get_sorted_entry_ids() -> Array:
     var ids := _entries.keys()
@@ -129,3 +201,39 @@ func entries_for_unlock(category: String, group: String = "") -> Array:
         if not unique.has(id):
             unique.append(id)
     return unique
+
+func get_entries_for_subject(subject_type: String, subject_id: String) -> Array:
+    var canonical_type := _canonical_subject_type(subject_type)
+    if canonical_type.is_empty():
+        return []
+    if not _entries_by_subject.has(canonical_type):
+        return []
+    var bucket: Dictionary = _entries_by_subject[canonical_type]
+    if not bucket.has(subject_id):
+        return []
+    return bucket[subject_id].duplicate()
+
+func get_highlights_for_subject(subject_type: String, subject_id: String) -> Array:
+    var ids := get_entries_for_subject(subject_type, subject_id)
+    var highlights: Array = []
+    for id in ids:
+        var highlight := get_entry_highlight(String(id))
+        if highlight.is_empty():
+            continue
+        if highlight in highlights:
+            continue
+        highlights.append(highlight)
+    return highlights
+
+func get_highlights_for_class(class_id: String) -> Array:
+    return get_highlights_for_subject("class", class_id)
+
+func get_highlights_for_group(category: String, group: String) -> Array:
+    var id := "%s/%s" % [category, group]
+    return get_highlights_for_subject("group", id)
+
+func get_highlights_for_ability(ability_id: String) -> Array:
+    return get_highlights_for_subject("ability", ability_id)
+
+func get_highlights_for_hazard(hazard_id: String) -> Array:
+    return get_highlights_for_subject("hazard", hazard_id)
