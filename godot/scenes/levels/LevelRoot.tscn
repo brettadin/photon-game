@@ -1,4 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/levels/electromagnetism_lab.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/chemical_vat.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/magnetic_trap.tscn" id="5"]
 
 [sub_resource type="TileSet" id="TileSet_d2p3q"]
 tile_size = Vector2i(64, 64)
@@ -14,9 +20,32 @@ cell_quadrant_size = 16
 unique_name_in_owner = true
 position = Vector2(0, -32)
 
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(0, -32)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position = Vector2(0, 0)
+limit_bottom = 4096
+limit_left = -4096
+limit_right = 4096
+limit_top = -4096
+current = true
+
+[node name="GameController" type="Node" parent="."]
+script = ExtResource("2")
+player_path = NodePath("../Player")
+
 [node name="Hazards" type="Node2D" parent="."]
 unique_name_in_owner = true
 groups = ["level_hazards"]
+
+[node name="ElectromagnetismLab" parent="Hazards" instance=ExtResource("3")]
+
+[node name="ChemicalVat" parent="Hazards" instance=ExtResource("4")]
+position = Vector2(-320, 192)
+
+[node name="MagneticTrap" parent="Hazards" instance=ExtResource("5")]
+position = Vector2(320, 192)
 
 [node name="Interactives" type="Node2D" parent="."]
 unique_name_in_owner = true
