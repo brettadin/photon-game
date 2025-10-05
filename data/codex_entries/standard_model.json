@@ -1,0 +1,48 @@
+{
+  "entries": [
+    {
+      "id": "codex_standard_model_roster",
+      "title": "Standard Model Roster Overview",
+      "category": "Standard Model",
+      "tags": ["quarks", "leptons", "bosons"],
+      "unlock": {"type": "always"},
+      "body": [
+        "Quarks, leptons, and gauge bosons make up the Standard Model roster available at the start of a run. Each family focuses on a different interaction: quarks thrive on the strong force, leptons are built around electroweak precision, and bosons embody the force carriers themselves.",
+        "Picking a class from this roster highlights the role of mass, charge, and spin in combat terms. High mass translates into heavier crowd control and burst damage, while fractional charges reshape how abilities polarise the arena. Spins distinguish fermions from bosons—fermions enforce positioning windows, while bosons reward timing big, sweeping support plays."
+      ]
+    },
+    {
+      "id": "codex_leptons_ignore_gluons",
+      "title": "Why Leptons Ignore Gluon Fields",
+      "category": "Standard Model",
+      "tags": ["leptons", "strong force"],
+      "unlock": {"type": "group", "category": "standard_model", "group": "leptons"},
+      "body": [
+        "Leptons such as electrons, muons, and neutrinos carry no colour charge. Gluons couple only to colour, so a lepton entering a gluon field simply has nothing for the strong force to grip. In play this means lepton archetypes phase through colour-binding hazards and only need to respect electromagnetic or weak interactions.",
+        "Because they lack colour charge, leptons rarely form composite states. Their high mobility kits emphasise precision dodges, stealth, or electric utility rather than tether play. When you unlock lepton codex entries you can safely ignore gluon traps, using them instead as cover while quark opponents remain bound."
+      ]
+    },
+    {
+      "id": "codex_color_charge_confinement",
+      "title": "Color Charge and Confinement",
+      "category": "Standard Model",
+      "tags": ["quarks", "color charge"],
+      "unlock": {"type": "group", "category": "standard_model", "group": "quarks"},
+      "body": [
+        "Quarks come in three colour charges—red, green, and blue. Gluons constantly exchange colour between quarks, creating the confining force that keeps them bound inside hadrons. Gameplay mirrors this through tether-based abilities: quark loadouts excel when coordinating with allies to maintain colour links and trigger baryon-level bursts.",
+        "Breaking confinement requires huge energy, so quark classes trade agility for devastating combos. Their mass-heavy stats make them slower but capable of stabilising objectives. Watch your colour alignment gauges; timed swaps let you unleash resonance damage before decay timers pull you back."
+      ]
+    },
+    {
+      "id": "codex_gauge_boson_roles",
+      "title": "Gauge Bosons in the Field",
+      "category": "Standard Model",
+      "tags": ["bosons", "forces"],
+      "unlock": {"type": "group", "category": "standard_model", "group": "bosons"},
+      "body": [
+        "Gauge bosons mediate the fundamental forces. Photons relay electromagnetism, gluons bind colour, and the W and Z bosons carry the weak interaction. The Higgs boson stands apart, granting mass by coupling to particles as they move through its field.",
+        "Boson classes therefore lean into team utility and high-impact ultimates. Expect wide-area pulses, support auras, and abilities that reshape how allies interact with hazards. Their spins of 1 (or 0 for the Higgs) allow simultaneous occupancy of fields, letting multiple bosons stack their effects without exclusion."
+      ]
+    }
+  ]
+}

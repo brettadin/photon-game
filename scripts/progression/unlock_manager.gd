@@ -5,6 +5,7 @@ const STORAGE_PATH := "user://progression_state.json"
 
 var _runs_completed: int = 0
 var _manual_unlocks: Dictionary = {}
+var _codex_entries: Dictionary = {}
 
 func _init() -> void:
     _load_state()
@@ -19,6 +20,19 @@ func unlock_class(id: StringName) -> void:
         return
     _manual_unlocks[id] = true
     _save_state()
+
+func unlock_codex_entry(id: StringName) -> void:
+    id = StringName(id)
+    if id.is_empty():
+        return
+    if _codex_entries.get(id, false):
+        return
+    _codex_entries[id] = true
+    _save_state()
+
+func unlock_codex_entries(ids: Array) -> void:
+    for id in ids:
+        unlock_codex_entry(StringName(id))
 
 func is_class_unlocked(class_data: Dictionary) -> bool:
     var id := StringName(class_data.get("id", ""))
@@ -70,6 +84,19 @@ func describe_requirement(requirement: Dictionary) -> String:
 func get_runs_completed() -> int:
     return _runs_completed
 
+func is_codex_entry_unlocked(id: StringName) -> bool:
+    id = StringName(id)
+    if id.is_empty():
+        return false
+    return _codex_entries.get(id, false)
+
+func get_unlocked_codex_entries() -> Array:
+    var ids := []
+    for key in _codex_entries.keys():
+        if _codex_entries[key]:
+            ids.append(String(key))
+    return ids
+
 func _get_mass_requirement(mass: float) -> Dictionary:
     if mass >= 100000.0:
         return {
@@ -109,15 +136,25 @@ func _load_state() -> void:
         for key in manual.keys():
             if manual[key]:
                 _manual_unlocks[StringName(key)] = true
+    var codex_data := data.get("codex_entries", [])
+    if typeof(codex_data) == TYPE_ARRAY:
+        _codex_entries.clear()
+        for id in codex_data:
+            _codex_entries[StringName(id)] = true
 
 func _save_state() -> void:
     var file := FileAccess.open(STORAGE_PATH, FileAccess.WRITE)
     if file == null:
         push_warning("UnlockManager: Failed to persist progression state.")
         return
+    var codex_array := []
+    for key in _codex_entries.keys():
+        if _codex_entries[key]:
+            codex_array.append(String(key))
     var payload := {
         "runs_completed": _runs_completed,
         "manual_unlocks": _manual_unlocks,
+        "codex_entries": codex_array,
     }
     file.store_string(JSON.stringify(payload))
     file.close()

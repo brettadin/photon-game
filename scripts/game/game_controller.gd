@@ -4,7 +4,9 @@ class_name GameController
 const ParticleClassDefinition := preload("res://scripts/classes/particle_class.gd")
 const PlayerAvatar := preload("res://scripts/player/player_avatar.gd")
 const UnlockManager := preload("res://scripts/progression/unlock_manager.gd")
-const CharacterSelectScene := preload("res://scenes/ui/character_select.tscn")
+const CodexDatabase := preload("res://scripts/data/codex_database.gd")
+const CharacterSelectScene := preload("res://scenes/ui/CharacterSelect.tscn")
+const CodexScene := preload("res://scenes/ui/Codex.tscn")
 const BoonManager := preload("res://scripts/systems/boon_manager.gd")
 
 const ABILITY_SCRIPTS := {
@@ -83,15 +85,24 @@ signal boon_options_ready(source: StringName, options: Array)
 signal boon_applied(boon_id: StringName, source: StringName, details: Dictionary)
 
 var _unlock_manager := UnlockManager.new()
+var _codex_database: CodexDatabase = CodexDatabase.new()
 var _selection_ui: Control
+var _codex_ui: Codex
 var _player: PlayerAvatar
 var _boon_manager: BoonManager
 
 func _ready() -> void:
     _resolve_player()
     _ensure_boon_manager()
+    _ensure_codex_baseline_unlocks()
     if show_selection_on_ready:
         open_character_select()
+
+func _input(event: InputEvent) -> void:
+    if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
+        _toggle_pause()
+    elif event.is_action_pressed("codex"):
+        _open_codex(false)
 
 func open_character_select() -> void:
     if _selection_ui == null:
@@ -101,6 +112,8 @@ func open_character_select() -> void:
             _selection_ui.set_unlock_manager(_unlock_manager)
         if _selection_ui.has_signal("class_chosen"):
             _selection_ui.connect("class_chosen", Callable(self, "_on_class_chosen"))
+        if _selection_ui.has_signal("codex_requested"):
+            _selection_ui.connect("codex_requested", Callable(self, "_on_codex_requested"))
     _selection_ui.visible = true
 
 func _on_class_chosen(class_data: Dictionary) -> void:
@@ -114,6 +127,7 @@ func _on_class_chosen(class_data: Dictionary) -> void:
     _ensure_boon_manager()
     if _boon_manager:
         _boon_manager.on_run_started(class_data, particle_class)
+    _unlock_codex_for_class(class_data)
     emit_signal("run_started", class_data, particle_class)
     if is_instance_valid(_selection_ui):
         _selection_ui.hide()
@@ -180,6 +194,62 @@ func _ensure_boon_manager() -> void:
         _boon_manager.set_player(_player)
     _boon_manager.boon_options_ready.connect(_on_boon_options_ready)
     _boon_manager.boon_applied.connect(_on_boon_applied)
+
+func _ensure_codex_ui() -> void:
+    if is_instance_valid(_codex_ui):
+        return
+    _codex_ui = CodexScene.instantiate()
+    _codex_ui.name = "Codex"
+    add_child(_codex_ui)
+    _codex_ui.close_requested.connect(_on_codex_close_requested)
+    if _codex_ui.has_method("set_unlock_manager"):
+        _codex_ui.set_unlock_manager(_unlock_manager)
+    _codex_ui.hide_codex()
+
+func _ensure_codex_baseline_unlocks() -> void:
+    if _codex_database == null:
+        _codex_database = CodexDatabase.new()
+    var baseline := _codex_database.entries_for_unlock("", "")
+    if not baseline.is_empty():
+        _unlock_manager.unlock_codex_entries(baseline)
+    _ensure_codex_ui()
+
+func _open_codex(resume_on_close: bool) -> void:
+    _ensure_codex_ui()
+    if _codex_ui == null:
+        return
+    _codex_ui.set_unlock_manager(_unlock_manager)
+    _codex_ui.set_resume_on_close(resume_on_close)
+    _codex_ui.refresh_entries()
+    _codex_ui.show_codex()
+
+func _toggle_pause() -> void:
+    var tree := get_tree()
+    tree.paused = not tree.paused
+    if tree.paused:
+        _open_codex(true)
+    elif is_instance_valid(_codex_ui):
+        _codex_ui.hide_codex()
+
+func _on_codex_close_requested(resume_on_close: bool) -> void:
+    if resume_on_close:
+        var tree := get_tree()
+        tree.paused = false
+
+func _on_codex_requested() -> void:
+    _open_codex(false)
+
+func _unlock_codex_for_class(class_data: Dictionary) -> void:
+    if _codex_database == null:
+        _codex_database = CodexDatabase.new()
+    var category := String(class_data.get("category", ""))
+    var group := String(class_data.get("group", ""))
+    var ids := _codex_database.entries_for_unlock(category, group)
+    if ids.is_empty():
+        return
+    _unlock_manager.unlock_codex_entries(ids)
+    if is_instance_valid(_codex_ui):
+        _codex_ui.refresh_entries()
 
 func set_level_theme_tags(tags: Array) -> void:
     _ensure_boon_manager()
