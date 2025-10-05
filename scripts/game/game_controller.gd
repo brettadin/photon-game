@@ -8,6 +8,7 @@ const CodexDatabase := preload("res://scripts/data/codex_database.gd")
 const CharacterSelectScene := preload("res://scenes/ui/CharacterSelect.tscn")
 const CodexScene := preload("res://scenes/ui/Codex.tscn")
 const BoonManager := preload("res://scripts/systems/boon_manager.gd")
+const RunModifierSystem := preload("res://scripts/run/modifier_system.gd")
 
 const ABILITY_SCRIPTS := {
     "color_dash": preload("res://scripts/abilities/color_dash.gd"),
@@ -90,10 +91,12 @@ var _selection_ui: Control
 var _codex_ui: Codex
 var _player: PlayerAvatar
 var _boon_manager: BoonManager
+var _run_modifier_system: RunModifierSystem
 
 func _ready() -> void:
     _resolve_player()
     _ensure_boon_manager()
+    _ensure_modifier_system()
     _ensure_codex_baseline_unlocks()
     if show_selection_on_ready:
         open_character_select()
@@ -127,6 +130,9 @@ func _on_class_chosen(class_data: Dictionary) -> void:
     _ensure_boon_manager()
     if _boon_manager:
         _boon_manager.on_run_started(class_data, particle_class)
+    _ensure_modifier_system()
+    if _run_modifier_system:
+        _run_modifier_system.on_run_started(class_data, particle_class)
     _unlock_codex_for_class(class_data)
     emit_signal("run_started", class_data, particle_class)
     if is_instance_valid(_selection_ui):
@@ -181,6 +187,8 @@ func _resolve_player() -> void:
         _player = node
         if _boon_manager:
             _boon_manager.set_player(_player)
+        if _run_modifier_system:
+            _run_modifier_system.set_player(_player)
 
 func _ensure_boon_manager() -> void:
     if _boon_manager:
@@ -194,6 +202,35 @@ func _ensure_boon_manager() -> void:
         _boon_manager.set_player(_player)
     _boon_manager.boon_options_ready.connect(_on_boon_options_ready)
     _boon_manager.boon_applied.connect(_on_boon_applied)
+
+func _ensure_modifier_system() -> void:
+    if _run_modifier_system:
+        _run_modifier_system.set_unlock_manager(_unlock_manager)
+        if _player:
+            _run_modifier_system.set_player(_player)
+        return
+    _run_modifier_system = RunModifierSystem.new()
+    _run_modifier_system.name = "RunModifierSystem"
+    add_child(_run_modifier_system)
+    _run_modifier_system.set_unlock_manager(_unlock_manager)
+    if _player:
+        _run_modifier_system.set_player(_player)
+    _run_modifier_system.theme_changed.connect(_on_run_theme_changed)
+    _run_modifier_system.stage_modifiers_applied.connect(_on_run_stage_modifiers)
+
+func advance_to_stage(stage_index: int, context: Dictionary = {}) -> void:
+    if _run_modifier_system == null:
+        return
+    _run_modifier_system.on_stage_advanced(stage_index, context)
+
+func _on_run_theme_changed(_theme_id: StringName, details: Dictionary) -> void:
+    if _boon_manager == null:
+        return
+    var tags := details.get("tags", [])
+    _boon_manager.set_active_theme_tags(tags)
+
+func _on_run_stage_modifiers(_stage_index: int, _modifier_ids: Array) -> void:
+    pass
 
 func _ensure_codex_ui() -> void:
     if is_instance_valid(_codex_ui):

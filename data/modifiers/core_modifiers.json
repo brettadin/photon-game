@@ -1,0 +1,89 @@
+{
+  "modifiers": [
+    {
+      "id": "positron_boon",
+      "display_name": "Positron Boon",
+      "type": "boon",
+      "description": "Antiparticle charge floods your systems, overclocking core attacks.",
+      "class_tags": ["lepton", "electric_tricks", "tech_interface"],
+      "weight": 1.0,
+      "profile": {
+        "bonuses": {
+          "damage": 0.25,
+          "control": 0.15
+        },
+        "keywords": ["positronic_overcharge"]
+      },
+      "callback": "res://scripts/run/modifier_callbacks/positron_boon.gd"
+    },
+    {
+      "id": "radiation_surge",
+      "display_name": "Radiation Surge",
+      "type": "bane",
+      "description": "Irradiated hazards erode containment plating and destabilise energy stores.",
+      "class_tags": ["element", "heavy_element", "hazard_zone"],
+      "weight": 1.0,
+      "profile": {
+        "bonuses": {
+          "defense": -0.2
+        },
+        "multipliers": {
+          "stability": 0.85
+        }
+      },
+      "callback": "res://scripts/run/modifier_callbacks/radiation_surge.gd"
+    },
+    {
+      "id": "hadronic_resonance",
+      "display_name": "Hadronic Resonance",
+      "type": "boon",
+      "description": "Colour fields synchronise, reinforcing baryonic strikes.",
+      "class_tags": ["quark", "boson", "color_binding"],
+      "weight": 1.2,
+      "profile": {
+        "bonuses": {
+          "damage": 0.15,
+          "control": 0.1
+        },
+        "multipliers": {
+          "stability": 1.1
+        },
+        "keywords": ["hadronic_synergy"]
+      }
+    }
+  ],
+  "themes": [
+    {
+      "id": "quantum_wilds",
+      "display_name": "Quantum Wilds",
+      "description": "Shifting probability biomes favour agile particles while warping hazard frequencies.",
+      "tags": ["quantum", "wilds"],
+      "weight": 1.0,
+      "profile": {
+        "bonuses": {
+          "evasion": 0.12
+        }
+      },
+      "boon_pool": ["positron_boon", "hadronic_resonance"],
+      "bane_pool": ["radiation_surge"]
+    },
+    {
+      "id": "stellar_forge",
+      "display_name": "Stellar Forge",
+      "description": "Fusion furnaces bathe combat arenas in raw energy and heavy matter flux.",
+      "tags": ["stellar", "fusion"],
+      "weight": 0.8,
+      "profile": {
+        "bonuses": {
+          "damage": 0.1,
+          "speed": -10.0
+        },
+        "multipliers": {
+          "stability": 1.05
+        }
+      },
+      "boon_pool": ["hadronic_resonance"],
+      "bane_pool": ["radiation_surge"]
+    }
+  ]
+}
