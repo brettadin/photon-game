@@ -67,9 +67,5 @@ func ensure_action(action_name: StringName) -> void:
                 InputMap.add_action(action_name)
 
 func _prepare_action(action_name: StringName) -> void:
-        _clear_or_create_action(action_name)
+        ensure_action(action_name)
         InputMap.action_erase_events(action_name)
-
-func _clear_or_create_action(action_name: StringName) -> void:
-        if not InputMap.has_action(action_name):
-                InputMap.add_action(action_name)
