@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="2" uid="uid://bryr478pcwtbl"]
@@ -10,12 +10,14 @@
 [ext_resource type="PackedScene" path="res://scenes/hazards/radiation_zone.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/ui/RunHUD.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/hazards/molecule_crafter.tscn" id="10"]
+[ext_resource type="Script" path="res://scripts/levels/level_root.gd" id="11"]
 
 [sub_resource type="TileSet" id="TileSet_d2p3q"]
 tile_size = Vector2i(64, 64)
 
 [node name="LevelRoot" type="Node2D"]
 unique_name_in_owner = true
+script = ExtResource("11")
 
 [node name="LevelGrid" type="TileMap" parent="."]
 tile_set = SubResource("TileSet_d2p3q")
@@ -27,9 +29,11 @@ position = Vector2(0, -32)
 
 [node name="Player" parent="." instance=ExtResource("1")]
 unique_name_in_owner = true
-position = Vector2(0, -32)
+position = Vector2(0, 0)
+groups = ["player"]
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
+unique_name_in_owner = true
 position = Vector2(0, 0)
 limit_bottom = 4096
 limit_left = -4096
