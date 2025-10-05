@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[sub_resource type="LabelSettings" id="LabelSettings_1"]
+font_size = 24
+font_color = Color(0.803922, 0.913725, 1, 1)
+
+[node name="RunHUD" type="CanvasLayer"]
+unique_name_in_owner = true
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+
+[node name="BootLabel" type="Label" parent="Root"]
+text = "Run HUD Placeholder"
+label_settings = SubResource("LabelSettings_1")
+

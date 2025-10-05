@@ -1,4 +1,15 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/levels/electromagnetism_lab.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/chemical_vat.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/magnetic_trap.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/levels/chemistry_lab.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/levels/nuclear_lab.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/radiation_zone.tscn" id="8"]
+[ext_resource type="PackedScene" path="res://scenes/ui/RunHUD.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/molecule_crafter.tscn" id="10"]
 
 [sub_resource type="TileSet" id="TileSet_d2p3q"]
 tile_size = Vector2i(64, 64)
@@ -14,10 +25,55 @@ cell_quadrant_size = 16
 unique_name_in_owner = true
 position = Vector2(0, -32)
 
-[node name="Hazards" type="Node2D" parent="."]
+[node name="Player" parent="." instance=ExtResource("1")]
+unique_name_in_owner = true
+position = Vector2(0, -32)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position = Vector2(0, 0)
+limit_bottom = 4096
+limit_left = -4096
+limit_right = 4096
+limit_top = -4096
+current = true
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+
+[node name="GameController" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2")
+player_path = NodePath("../Player")
+
+[node name="RunHUD" parent="." instance=ExtResource("9")]
+
+[node name="StageContent" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="ElectromagnetismLab" parent="StageContent" instance=ExtResource("3")]
+
+[node name="ChemistryLab" parent="StageContent" instance=ExtResource("6")]
+position = Vector2(920, -40)
+
+[node name="NuclearLab" parent="StageContent" instance=ExtResource("7")]
+position = Vector2(-920, 0)
+
+[node name="Hazards" type="Node2D" parent="StageContent"]
 unique_name_in_owner = true
 groups = ["level_hazards"]
 
-[node name="Interactives" type="Node2D" parent="."]
+[node name="ChemicalVat" parent="Hazards" instance=ExtResource("4")]
+position = Vector2(-520, 240)
+
+[node name="MagneticTrap" parent="Hazards" instance=ExtResource("5")]
+position = Vector2(520, 240)
+
+[node name="RadiationZone" parent="Hazards" instance=ExtResource("8")]
+position = Vector2(0, 320)
+
+[node name="Interactives" type="Node2D" parent="StageContent"]
 unique_name_in_owner = true
 groups = ["level_interactives"]
+
+[node name="MoleculeCrafter" parent="Interactives" instance=ExtResource("10")]
+position = Vector2(0, -320)
+
