@@ -1,6 +1,8 @@
 extends Resource
 class_name Ability
 
+const CodexService := preload("res://scripts/data/codex_service.gd")
+
 ## Base ability resource that handles activation cooldowns, resource costs,
 ## and animation hooks. Concrete abilities should inherit from this class
 ## and override [_execute_activation] to provide their gameplay effect.
@@ -17,6 +19,7 @@ signal cooldown_completed()
 @export var animation_blend_time: float = 0.1
 
 var slot: StringName = &""
+var codex_subject_id: String = ""
 var _cooldown_ready_time: float = 0.0
 
 func on_equip(_user) -> void:
@@ -180,3 +183,24 @@ func _format_cost_summary(costs: Dictionary) -> String:
         var amount := float(costs[key])
         parts.append("%s x%0.2f" % [str(key), amount])
     return ", ".join(parts)
+
+func get_codex_highlights() -> Array:
+    if codex_subject_id.is_empty():
+        return []
+    return CodexService.highlights_for_ability(codex_subject_id)
+
+func get_contextual_tooltip() -> String:
+    var segments: Array = []
+    if not ability_name.is_empty():
+        segments.append(ability_name)
+    var trimmed_description := String(description).strip_edges()
+    if not trimmed_description.is_empty():
+        segments.append(trimmed_description)
+    var highlight_lines := get_codex_highlights()
+    if not highlight_lines.is_empty():
+        if not segments.is_empty():
+            segments.append("")
+        segments.append("Codex Notes:")
+        for note in highlight_lines:
+            segments.append("• %s" % note)
+    return "\n".join(segments)

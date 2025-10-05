@@ -1,0 +1,1879 @@
+{
+  "entries": [
+    {
+      "id": "codex_group_standard_model_quarks",
+      "title": "Quark Cohort Dossier",
+      "category": "Standard Model",
+      "tags": [
+        "strong force",
+        "color charge"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "quarks"
+      },
+      "body": [
+        "Up, down, and heavy flavour quarks all carry fractional colour charge. They never appear alone; gluon exchange stitches trios into baryons or pairs into mesons.",
+        "In combat that translates to tether play. Gluon Bind and Baryon Wall let coordinated squads negate Magnetic Traps by keeping colour balanced across the team."
+      ],
+      "highlight": "Quark squads juggle colour charge to weave baryon shields that shrug off Magnetic Trap shears.",
+      "subjects": {
+        "groups": [
+          "standard_model/quarks"
+        ],
+        "abilities": [
+          "gluon_bind",
+          "baryon_wall",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "gluon_bind",
+          "baryon_wall",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_standard_model_leptons",
+      "title": "Lepton Mobility Brief",
+      "category": "Standard Model",
+      "tags": [
+        "electroweak",
+        "mobility"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "leptons"
+      },
+      "body": [
+        "Leptons ignore the strong force entirely, interacting only via electromagnetism and the weak interaction. Their masses span orders of magnitude but their singlet nature keeps them free of colour tethers.",
+        "The kit emphasises evasion\u2014Photon Dash and Phase Shift let them ghost through Charged Fields, while Ghost Walk ensures neutrinos slip past detection."
+      ],
+      "highlight": "Leptons' lack of colour charge keeps them fluid through Charged Field mazes while Photon Dash burns energy lanes.",
+      "subjects": {
+        "groups": [
+          "standard_model/leptons"
+        ],
+        "abilities": [
+          "photon_dash",
+          "phase_shift",
+          "ghost_walk"
+        ],
+        "hazards": [
+          "charged_field",
+          "radiation_zone"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "photon_dash",
+          "phase_shift",
+          "ghost_walk"
+        ],
+        "hazards": [
+          "charged_field",
+          "radiation_zone"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_standard_model_bosons",
+      "title": "Gauge Boson Field Notes",
+      "category": "Standard Model",
+      "tags": [
+        "force carriers",
+        "team utility"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "bosons"
+      },
+      "body": [
+        "Photons, gluons, and weak bosons are the actual force messengers. Their integer spin lets them stack in the same state, which the roster captures with support auras and overlapping pulses.",
+        "Gamma Burst and Weak Charge Field translate theoretical fields into massive plays, while Higgs Mass Boost lets squads weather reactor rooms despite rising flux."
+      ],
+      "highlight": "Gauge bosons reshape arenas with Weak Charge Field pulses that stabilise teams around reactor hazards.",
+      "subjects": {
+        "groups": [
+          "standard_model/bosons"
+        ],
+        "abilities": [
+          "weak_charge_field",
+          "gamma_burst",
+          "higgs_mass_boost"
+        ],
+        "hazards": [
+          "nuclear_reactor"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "weak_charge_field",
+          "gamma_burst",
+          "higgs_mass_boost"
+        ],
+        "hazards": [
+          "nuclear_reactor"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_periodic_alkali_metals",
+      "title": "Alkali Reactivity Log",
+      "category": "Periodic Table",
+      "tags": [
+        "chemistry",
+        "reactivity"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "alkali_metals"
+      },
+      "body": [
+        "Lithium, sodium, and potassium shed their outer electron eagerly. That rapid oxidation explains their fragile armour and explosive surges.",
+        "Timing Chain Discharge bursts before a Chemical Vat splash keeps the team alive\u2014Ion Field pickups buy a few seconds of stability."
+      ],
+      "highlight": "Alkali metals hold a single valence electron, so Chain Discharge surges while Chemical Vats threaten catastrophic runaway.",
+      "subjects": {
+        "groups": [
+          "periodic/alkali_metals"
+        ],
+        "abilities": [
+          "chain_discharge",
+          "ion_field"
+        ],
+        "hazards": [
+          "chemical_vat",
+          "electric_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "chain_discharge",
+          "ion_field"
+        ],
+        "hazards": [
+          "chemical_vat",
+          "electric_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_periodic_alkaline_earth_metals",
+      "title": "Alkaline Earth Stabiliser Brief",
+      "category": "Periodic Table",
+      "tags": [
+        "chemistry",
+        "defense"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "alkaline_earth_metals"
+      },
+      "body": [
+        "Magnesium and calcium lose two electrons to reach noble stability, so they prefer building structures over explosive plays.",
+        "Mass Anchor and Neutral Screen distribute that stability to allies, countering Molecule Crafter puzzles with reliable scaffolding."
+      ],
+      "highlight": "Doubly charged lattices steady Inertial Field bulwarks that shrug off Molecule Crafter disruptions.",
+      "subjects": {
+        "groups": [
+          "periodic/alkaline_earth_metals"
+        ],
+        "abilities": [
+          "inertial_field",
+          "mass_anchor",
+          "neutral_screen"
+        ],
+        "hazards": [
+          "molecule_crafter"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "inertial_field",
+          "mass_anchor",
+          "neutral_screen"
+        ],
+        "hazards": [
+          "molecule_crafter"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_periodic_chalcogens",
+      "title": "Chalcogen Catalyst Notes",
+      "category": "Periodic Table",
+      "tags": [
+        "chemistry",
+        "oxidation"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "chalcogens"
+      },
+      "body": [
+        "Oxygen and sulphur bond readily, acting as oxidisers and breath carriers. Their kits emphasise sustain and fire synergy.",
+        "Orbital Strike pairs with support oxygenate loops, yet you must vent Chemical Vats before the atmosphere spikes beyond control."
+      ],
+      "highlight": "Chalcogens fuel combustion and orbital strikes, but Chemical Vats can tip their oxidisers into runaway feed.",
+      "subjects": {
+        "groups": [
+          "periodic/chalcogens"
+        ],
+        "abilities": [
+          "orbital_strike",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "orbital_strike",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_periodic_halogens",
+      "title": "Halogen Corrosion Report",
+      "category": "Periodic Table",
+      "tags": [
+        "chemistry",
+        "corrosion"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "halogens"
+      },
+      "body": [
+        "Fluorine, chlorine, and iodine hunger for a single electron. Their affinity makes them vicious debuffers with potent area denial.",
+        "Halogen Corrosion and Chain Discharge combo with Chemical Vat spills, forcing opponents to flee poisoned terrain."
+      ],
+      "highlight": "Halogens rip electrons apart, letting Halogen Corrosion shred armour while Chemical Vats amplify toxicity.",
+      "subjects": {
+        "groups": [
+          "periodic/halogens"
+        ],
+        "abilities": [
+          "halogen_corrosion",
+          "chain_discharge"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "halogen_corrosion",
+          "chain_discharge"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_periodic_noble_gases",
+      "title": "Noble Gas Field Manual",
+      "category": "Periodic Table",
+      "tags": [
+        "chemistry",
+        "inert"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "noble_gases"
+      },
+      "body": [
+        "Helium, neon, and argon sport full valence shells. They scarcely react, making them perfect for insulation and crowd calming.",
+        "Their Noble Gas Barrier and Refraction Cloak tools nullify Electric Field arcs while levitation auras reposition allies."
+      ],
+      "highlight": "Inert shells resist reactions, so Noble Gas Barrier keeps Electric Fields from ionising your squad.",
+      "subjects": {
+        "groups": [
+          "periodic/noble_gases"
+        ],
+        "abilities": [
+          "noble_gas_barrier",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "electric_field",
+          "charged_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "noble_gas_barrier",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "electric_field",
+          "charged_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_periodic_transition_metals",
+      "title": "Transition Metal Metallurgy Brief",
+      "category": "Periodic Table",
+      "tags": [
+        "chemistry",
+        "magnetism"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "transition_metals"
+      },
+      "body": [
+        "Iron, copper, and gold exploit partially filled d-shells for bonding variety, conductivity, and magnetism.",
+        "Color Field and Mass Anchor style abilities let them manipulate Magnetic Traps, turning hazards into capture tools."
+      ],
+      "highlight": "Transition metals channel d-shell electrons into Magnetic Control grabs that tame Magnetic Traps.",
+      "subjects": {
+        "groups": [
+          "periodic/transition_metals"
+        ],
+        "abilities": [
+          "mass_anchor",
+          "color_field"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "mass_anchor",
+          "color_field"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      }
+    },
+    {
+      "id": "codex_group_periodic_radioactive_metals",
+      "title": "Radioactive Chain Reaction Log",
+      "category": "Periodic Table",
+      "tags": [
+        "radiation",
+        "decay"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "radioactive_metals"
+      },
+      "body": [
+        "Thorium and uranium undergo spontaneous decay, releasing ionising radiation. Their kits trade survivability for apocalyptic range.",
+        "Beta Cascade detonations must be timed to clear Radiation Zones or Fission Reactor surges before the fallout backfires."
+      ],
+      "highlight": "Radioactive metals bleed energy; Beta Cascade and Weak Flux vent core heat before Radiation Zones overwhelm shielding.",
+      "subjects": {
+        "groups": [
+          "periodic/radioactive_metals"
+        ],
+        "abilities": [
+          "beta_decay",
+          "weak_flux",
+          "annihilation_wave"
+        ],
+        "hazards": [
+          "radiation_zone",
+          "nuclear_reactor"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "beta_decay",
+          "weak_flux",
+          "annihilation_wave"
+        ],
+        "hazards": [
+          "radiation_zone",
+          "nuclear_reactor"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_quark_up",
+      "title": "Up Quark Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "quarks",
+        "Up Quark"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "quarks"
+      },
+      "body": [
+        "Up Quark translates those numbers into agile charge weaving quick orbitals, colour-lock tethers that reward ally positioning, and three-part combos that trigger baryon bursts; Mass 2.30 MeV/c\u00b2, stability 0.90, charge +0.666e.",
+        "Core ability focus: Color Dash, Gluon Bind. Watch for Magnetic Trap. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Up Quark carries +0.666e with 2.30 MeV/c\u00b2, turning Color Dash, Gluon Bind into reliable counters against Magnetic Trap.",
+      "subjects": {
+        "classes": [
+          "quark_up"
+        ],
+        "groups": [
+          "standard_model/quarks"
+        ],
+        "abilities": [
+          "color_dash",
+          "gluon_bind"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "color_dash",
+          "gluon_bind"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_quark_down",
+      "title": "Down Quark Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "quarks",
+        "Down Quark"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "quarks"
+      },
+      "body": [
+        "Down Quark translates those numbers into three-part combos that trigger baryon bursts, slow but unflinching stance control, and colour-lock tethers that reward ally positioning; Mass 4.80 MeV/c\u00b2, stability 0.85, charge -0.333e.",
+        "Core ability focus: Baryon Wall, Fusion Lock. Watch for Magnetic Trap. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Down Quark carries -0.333e with 4.80 MeV/c\u00b2, turning Baryon Wall, Fusion Lock into reliable counters against Magnetic Trap.",
+      "subjects": {
+        "classes": [
+          "quark_down"
+        ],
+        "groups": [
+          "standard_model/quarks"
+        ],
+        "abilities": [
+          "baryon_wall",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "baryon_wall",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_quark_charm",
+      "title": "Charm Quark Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "quarks",
+        "Charm Quark"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "quarks"
+      },
+      "body": [
+        "Charm Quark translates those numbers into devastating burst windows, timed decay windows, and colour-lock tethers that reward ally positioning; Mass 1275.00 MeV/c\u00b2, stability 0.35, charge +0.666e.",
+        "Core ability focus: Gluon Bind, Annihilation Wave. Watch for Magnetic Trap, Radiation Zone. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Charm Quark carries +0.666e with 1275.00 MeV/c\u00b2, turning Gluon Bind, Annihilation Wave into reliable counters against Magnetic Trap and Radiation Zone.",
+      "subjects": {
+        "classes": [
+          "quark_charm"
+        ],
+        "groups": [
+          "standard_model/quarks"
+        ],
+        "abilities": [
+          "gluon_bind",
+          "annihilation_wave"
+        ],
+        "hazards": [
+          "magnetic_trap",
+          "radiation_zone"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "gluon_bind",
+          "annihilation_wave"
+        ],
+        "hazards": [
+          "magnetic_trap",
+          "radiation_zone"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_quark_strange",
+      "title": "Strange Quark Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "quarks",
+        "Strange Quark"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "quarks"
+      },
+      "body": [
+        "Strange Quark translates those numbers into lingering decay effects, precision debuffs, and colour-lock tethers that reward ally positioning; Mass 95.00 MeV/c\u00b2, stability 0.40, charge -0.333e.",
+        "Core ability focus: Hadronize, Fusion Lock. Watch for Magnetic Trap, Chemical Vat. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Strange Quark carries -0.333e with 95.00 MeV/c\u00b2, turning Hadronize, Fusion Lock into reliable counters against Magnetic Trap and Chemical Vat.",
+      "subjects": {
+        "classes": [
+          "quark_strange"
+        ],
+        "groups": [
+          "standard_model/quarks"
+        ],
+        "abilities": [
+          "hadronize",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "magnetic_trap",
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "hadronize",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "magnetic_trap",
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_quark_top",
+      "title": "Top Quark Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "quarks",
+        "Top Quark"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "quarks"
+      },
+      "body": [
+        "Top Quark translates those numbers into ultimate overclock, timed decay windows, and colour-lock tethers that reward ally positioning; Mass 172900.00 MeV/c\u00b2, stability 0.10, charge +0.666e.",
+        "Core ability focus: Annihilation Wave, Beta Cascade. Watch for Fission Reactor Core, Radiation Zone. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Top Quark carries +0.666e with 172900.00 MeV/c\u00b2, turning Annihilation Wave, Beta Cascade into reliable counters against Fission Reactor Core and Radiation Zone.",
+      "subjects": {
+        "classes": [
+          "quark_top"
+        ],
+        "groups": [
+          "standard_model/quarks"
+        ],
+        "abilities": [
+          "annihilation_wave",
+          "beta_decay"
+        ],
+        "hazards": [
+          "nuclear_reactor",
+          "radiation_zone"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "annihilation_wave",
+          "beta_decay"
+        ],
+        "hazards": [
+          "nuclear_reactor",
+          "radiation_zone"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_quark_bottom",
+      "title": "Bottom Quark Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "quarks",
+        "Bottom Quark"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "quarks"
+      },
+      "body": [
+        "Bottom Quark translates those numbers into gravity-assisted slams, timed decay windows, and colour-lock tethers that reward ally positioning; Mass 4180.00 MeV/c\u00b2, stability 0.15, charge -0.333e.",
+        "Core ability focus: Mass Anchor, Fusion Lock. Watch for Magnetic Trap, Radiation Zone. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Bottom Quark carries -0.333e with 4180.00 MeV/c\u00b2, turning Mass Anchor, Fusion Lock into reliable counters against Magnetic Trap and Radiation Zone.",
+      "subjects": {
+        "classes": [
+          "quark_bottom"
+        ],
+        "groups": [
+          "standard_model/quarks"
+        ],
+        "abilities": [
+          "mass_anchor",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "magnetic_trap",
+          "radiation_zone"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "mass_anchor",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "magnetic_trap",
+          "radiation_zone"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_lepton_electron",
+      "title": "Electron Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "leptons",
+        "Electron"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "leptons"
+      },
+      "body": [
+        "Electron translates those numbers into orbital dash patterns, conductive utility, and objective hacking expertise; Mass 0.51 MeV/c\u00b2, stability 0.95, charge -1.000e.",
+        "Core ability focus: Photon Dash, Ion Field. Watch for Charged Field, Electric Field. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Electron carries -1.000e with 0.51 MeV/c\u00b2, turning Photon Dash, Ion Field into reliable counters against Charged Field and Electric Field.",
+      "subjects": {
+        "classes": [
+          "lepton_electron"
+        ],
+        "groups": [
+          "standard_model/leptons"
+        ],
+        "abilities": [
+          "photon_dash",
+          "ion_field"
+        ],
+        "hazards": [
+          "charged_field",
+          "electric_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "photon_dash",
+          "ion_field"
+        ],
+        "hazards": [
+          "charged_field",
+          "electric_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_lepton_electron_neutrino",
+      "title": "Electron Neutrino Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "leptons",
+        "Electron Neutrino"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "leptons"
+      },
+      "body": [
+        "Electron Neutrino translates those numbers into phase slipping, stealth infiltration, and weak-force manipulation; Mass 0.00 MeV/c\u00b2, stability 0.90, neutral charge.",
+        "Core ability focus: Ghost Walk, Phase Shift. Watch for Radiation Zone. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Electron Neutrino remains electrically neutral with 0.00 MeV/c\u00b2, turning Ghost Walk, Phase Shift into reliable counters against Radiation Zone.",
+      "subjects": {
+        "classes": [
+          "lepton_electron_neutrino"
+        ],
+        "groups": [
+          "standard_model/leptons"
+        ],
+        "abilities": [
+          "ghost_walk",
+          "phase_shift"
+        ],
+        "hazards": [
+          "radiation_zone"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "ghost_walk",
+          "phase_shift"
+        ],
+        "hazards": [
+          "radiation_zone"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_lepton_muon",
+      "title": "Muon Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "leptons",
+        "Muon"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "leptons"
+      },
+      "body": [
+        "Muon translates those numbers into devastating burst windows, self-decay timers, and conductive utility; Mass 105.70 MeV/c\u00b2, stability 0.25, charge -1.000e.",
+        "Core ability focus: Downward Smash, Beta Cascade. Watch for Charged Field, Fission Reactor Core. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Muon carries -1.000e with 105.70 MeV/c\u00b2, turning Downward Smash, Beta Cascade into reliable counters against Charged Field and Fission Reactor Core.",
+      "subjects": {
+        "classes": [
+          "lepton_muon"
+        ],
+        "groups": [
+          "standard_model/leptons"
+        ],
+        "abilities": [
+          "downward_smash",
+          "beta_decay"
+        ],
+        "hazards": [
+          "charged_field",
+          "nuclear_reactor"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "downward_smash",
+          "beta_decay"
+        ],
+        "hazards": [
+          "charged_field",
+          "nuclear_reactor"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_lepton_tau",
+      "title": "Tau Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "leptons",
+        "Tau"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "leptons"
+      },
+      "body": [
+        "Tau translates those numbers into gravity-assisted slams, self-decay timers, and berserker overdrive; Mass 1776.90 MeV/c\u00b2, stability 0.10, charge -1.000e.",
+        "Core ability focus: Mass Anchor, Annihilation Wave. Watch for Radiation Zone, Chemical Vat. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Tau carries -1.000e with 1776.90 MeV/c\u00b2, turning Mass Anchor, Annihilation Wave into reliable counters against Radiation Zone and Chemical Vat.",
+      "subjects": {
+        "classes": [
+          "lepton_tau"
+        ],
+        "groups": [
+          "standard_model/leptons"
+        ],
+        "abilities": [
+          "mass_anchor",
+          "annihilation_wave"
+        ],
+        "hazards": [
+          "radiation_zone",
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "mass_anchor",
+          "annihilation_wave"
+        ],
+        "hazards": [
+          "radiation_zone",
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_boson_photon",
+      "title": "Photon Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "bosons",
+        "Photon"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "bosons"
+      },
+      "body": [
+        "Photon translates those numbers into speed-blink tempo, light-control zoning, and fragile but explosive damage; Mass 0.00 MeV/c\u00b2, stability 1.00, neutral charge.",
+        "Core ability focus: Photon Dash, Gamma Burst. Watch for Electric Field, Charged Field. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Photon remains electrically neutral with 0.00 MeV/c\u00b2, turning Photon Dash, Gamma Burst into reliable counters against Electric Field and Charged Field.",
+      "subjects": {
+        "classes": [
+          "boson_photon"
+        ],
+        "groups": [
+          "standard_model/bosons"
+        ],
+        "abilities": [
+          "photon_dash",
+          "gamma_burst"
+        ],
+        "hazards": [
+          "electric_field",
+          "charged_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "photon_dash",
+          "gamma_burst"
+        ],
+        "hazards": [
+          "electric_field",
+          "charged_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_boson_gluon",
+      "title": "Gluon Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "bosons",
+        "Gluon"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "bosons"
+      },
+      "body": [
+        "Gluon translates those numbers into protective binding fields, team link amplification, and colour-lock tethers that reward ally positioning; Mass 0.00 MeV/c\u00b2, stability 0.80, neutral charge.",
+        "Core ability focus: Gluon Bind, Color Field. Watch for Magnetic Trap. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Gluon remains electrically neutral with 0.00 MeV/c\u00b2, turning Gluon Bind, Color Field into reliable counters against Magnetic Trap.",
+      "subjects": {
+        "classes": [
+          "boson_gluon"
+        ],
+        "groups": [
+          "standard_model/bosons"
+        ],
+        "abilities": [
+          "gluon_bind",
+          "color_field"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "gluon_bind",
+          "color_field"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_boson_w",
+      "title": "W Boson Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "bosons",
+        "W Boson"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "bosons"
+      },
+      "body": [
+        "W Boson translates those numbers into charge burst, self recoil, and weak-force manipulation; Mass 80390.00 MeV/c\u00b2, stability 0.05, charge +1.000e.",
+        "Core ability focus: W Blast, Weak Charge Field. Watch for Charged Field, Fission Reactor Core. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "W Boson carries +1.000e with 80390.00 MeV/c\u00b2, turning W Blast, Weak Charge Field into reliable counters against Charged Field and Fission Reactor Core.",
+      "subjects": {
+        "classes": [
+          "boson_w"
+        ],
+        "groups": [
+          "standard_model/bosons"
+        ],
+        "abilities": [
+          "w_blast",
+          "weak_charge_field"
+        ],
+        "hazards": [
+          "charged_field",
+          "nuclear_reactor"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "w_blast",
+          "weak_charge_field"
+        ],
+        "hazards": [
+          "charged_field",
+          "nuclear_reactor"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_boson_z",
+      "title": "Z Boson Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "bosons",
+        "Z Boson"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "bosons"
+      },
+      "body": [
+        "Z Boson translates those numbers into arena-wide pulses, self recoil, and weak-force manipulation; Mass 91190.00 MeV/c\u00b2, stability 0.05, neutral charge.",
+        "Core ability focus: Z Pulse, Weak Charge Field. Watch for Radiation Zone, Charged Field. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Z Boson remains electrically neutral with 91190.00 MeV/c\u00b2, turning Z Pulse, Weak Charge Field into reliable counters against Radiation Zone and Charged Field.",
+      "subjects": {
+        "classes": [
+          "boson_z"
+        ],
+        "groups": [
+          "standard_model/bosons"
+        ],
+        "abilities": [
+          "z_pulse",
+          "weak_charge_field"
+        ],
+        "hazards": [
+          "radiation_zone",
+          "charged_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "z_pulse",
+          "weak_charge_field"
+        ],
+        "hazards": [
+          "radiation_zone",
+          "charged_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_boson_higgs",
+      "title": "Higgs Boson Field Log",
+      "category": "Standard Model",
+      "tags": [
+        "bosons",
+        "Higgs Boson"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "standard_model",
+        "group": "bosons"
+      },
+      "body": [
+        "Higgs Boson translates those numbers into mass sharing boosts, support aura layering, and rare event ultimates; Mass 125090.00 MeV/c\u00b2, stability 0.50, neutral charge.",
+        "Core ability focus: Higgs Mass Boost, Higgs Resonance. Watch for Fission Reactor Core. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Higgs Boson remains electrically neutral with 125090.00 MeV/c\u00b2, turning Higgs Mass Boost, Higgs Resonance into reliable counters against Fission Reactor Core.",
+      "subjects": {
+        "classes": [
+          "boson_higgs"
+        ],
+        "groups": [
+          "standard_model/bosons"
+        ],
+        "abilities": [
+          "higgs_mass_boost",
+          "higgs_resonance"
+        ],
+        "hazards": [
+          "nuclear_reactor"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "higgs_mass_boost",
+          "higgs_resonance"
+        ],
+        "hazards": [
+          "nuclear_reactor"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_lithium",
+      "title": "Lithium Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "alkali metals",
+        "Lithium"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "alkali_metals"
+      },
+      "body": [
+        "Lithium translates those numbers into reactive burst surges, flammable dash trails, and fragile metallic body; Mass 6.94 u, stability 0.70, charge +1.000e. Reactivity 0.95.",
+        "Core ability focus: Chain Discharge, Photon Dash. Watch for Chemical Vat, Electric Field. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Lithium carries +1.000e with 6.94 u and reactivity 0.95, turning Chain Discharge, Photon Dash into reliable counters against Chemical Vat and Electric Field.",
+      "subjects": {
+        "classes": [
+          "element_lithium"
+        ],
+        "groups": [
+          "periodic/alkali_metals"
+        ],
+        "abilities": [
+          "chain_discharge",
+          "photon_dash"
+        ],
+        "hazards": [
+          "chemical_vat",
+          "electric_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "chain_discharge",
+          "photon_dash"
+        ],
+        "hazards": [
+          "chemical_vat",
+          "electric_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_sodium",
+      "title": "Sodium Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "alkali metals",
+        "Sodium"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "alkali_metals"
+      },
+      "body": [
+        "Sodium translates those numbers into reactive burst surges, caustic washing strikes, and fragile metallic body; Mass 22.99 u, stability 0.60, charge +1.000e. Reactivity 0.98.",
+        "Core ability focus: Chain Discharge, Halogen Corrosion. Watch for Chemical Vat. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Sodium carries +1.000e with 22.99 u and reactivity 0.98, turning Chain Discharge, Halogen Corrosion into reliable counters against Chemical Vat.",
+      "subjects": {
+        "classes": [
+          "element_sodium"
+        ],
+        "groups": [
+          "periodic/alkali_metals"
+        ],
+        "abilities": [
+          "chain_discharge",
+          "halogen_corrosion"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "chain_discharge",
+          "halogen_corrosion"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_potassium",
+      "title": "Potassium Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "alkali metals",
+        "Potassium"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "alkali_metals"
+      },
+      "body": [
+        "Potassium translates those numbers into reactive burst surges, poison lash chains, and fragile metallic body; Mass 39.10 u, stability 0.55, charge +1.000e. Reactivity 0.97.",
+        "Core ability focus: Chain Discharge, Beta Cascade. Watch for Chemical Vat. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Potassium carries +1.000e with 39.10 u and reactivity 0.97, turning Chain Discharge, Beta Cascade into reliable counters against Chemical Vat.",
+      "subjects": {
+        "classes": [
+          "element_potassium"
+        ],
+        "groups": [
+          "periodic/alkali_metals"
+        ],
+        "abilities": [
+          "chain_discharge",
+          "beta_decay"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "chain_discharge",
+          "beta_decay"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_magnesium",
+      "title": "Magnesium Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "alkaline earth metals",
+        "Magnesium"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "alkaline_earth_metals"
+      },
+      "body": [
+        "Magnesium translates those numbers into radiant firestorms, blinding flare control, and steady guard posture; Mass 24.31 u, stability 0.75, charge +2.000e. Reactivity 0.80.",
+        "Core ability focus: Inertial Field, Mass Anchor. Watch for Molecule Crafter, Electric Field. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Magnesium carries +2.000e with 24.31 u and reactivity 0.80, turning Inertial Field, Mass Anchor into reliable counters against Molecule Crafter and Electric Field.",
+      "subjects": {
+        "classes": [
+          "element_magnesium"
+        ],
+        "groups": [
+          "periodic/alkaline_earth_metals"
+        ],
+        "abilities": [
+          "inertial_field",
+          "mass_anchor"
+        ],
+        "hazards": [
+          "molecule_crafter",
+          "electric_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "inertial_field",
+          "mass_anchor"
+        ],
+        "hazards": [
+          "molecule_crafter",
+          "electric_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_calcium",
+      "title": "Calcium Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "alkaline earth metals",
+        "Calcium"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "alkaline_earth_metals"
+      },
+      "body": [
+        "Calcium translates those numbers into radiant firestorms, fortifying builder tools, and steady guard posture; Mass 40.08 u, stability 0.78, charge +2.000e. Reactivity 0.70.",
+        "Core ability focus: Mass Anchor, Neutral Screen. Watch for Molecule Crafter. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Calcium carries +2.000e with 40.08 u and reactivity 0.70, turning Mass Anchor, Neutral Screen into reliable counters against Molecule Crafter.",
+      "subjects": {
+        "classes": [
+          "element_calcium"
+        ],
+        "groups": [
+          "periodic/alkaline_earth_metals"
+        ],
+        "abilities": [
+          "mass_anchor",
+          "neutral_screen"
+        ],
+        "hazards": [
+          "molecule_crafter"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "mass_anchor",
+          "neutral_screen"
+        ],
+        "hazards": [
+          "molecule_crafter"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_oxygen",
+      "title": "Oxygen Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "chalcogens",
+        "Oxygen"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "chalcogens"
+      },
+      "body": [
+        "Oxygen translates those numbers into oxygen-rich support loops, combustion boosting, and life-sustaining breaths; Mass 16.00 u, stability 0.85, charge -2.000e. Reactivity 0.90.",
+        "Core ability focus: Orbital Strike, Fusion Lock. Watch for Chemical Vat, Radiation Zone. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Oxygen carries -2.000e with 16.00 u and reactivity 0.90, turning Orbital Strike, Fusion Lock into reliable counters against Chemical Vat and Radiation Zone.",
+      "subjects": {
+        "classes": [
+          "element_oxygen"
+        ],
+        "groups": [
+          "periodic/chalcogens"
+        ],
+        "abilities": [
+          "orbital_strike",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "chemical_vat",
+          "radiation_zone"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "orbital_strike",
+          "fusion_lock"
+        ],
+        "hazards": [
+          "chemical_vat",
+          "radiation_zone"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_sulfur",
+      "title": "Sulfur Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "chalcogens",
+        "Sulfur"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "chalcogens"
+      },
+      "body": [
+        "Sulfur translates those numbers into oxygen-rich support loops, poisonous cloud control, and alchemical trap layering; Mass 32.06 u, stability 0.70, charge -2.000e. Reactivity 0.88.",
+        "Core ability focus: Orbital Strike, Halogen Corrosion. Watch for Chemical Vat. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Sulfur carries -2.000e with 32.06 u and reactivity 0.88, turning Orbital Strike, Halogen Corrosion into reliable counters against Chemical Vat.",
+      "subjects": {
+        "classes": [
+          "element_sulfur"
+        ],
+        "groups": [
+          "periodic/chalcogens"
+        ],
+        "abilities": [
+          "orbital_strike",
+          "halogen_corrosion"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "orbital_strike",
+          "halogen_corrosion"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_fluorine",
+      "title": "Fluorine Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "halogens",
+        "Fluorine"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "halogens"
+      },
+      "body": [
+        "Fluorine translates those numbers into corrosive cloud, reactive burst surges, and toxicity mastery; Mass 19.00 u, stability 0.40, charge -1.000e. Reactivity 1.00.",
+        "Core ability focus: Halogen Corrosion, Chain Discharge. Watch for Chemical Vat. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Fluorine carries -1.000e with 19.00 u and reactivity 1.00, turning Halogen Corrosion, Chain Discharge into reliable counters against Chemical Vat.",
+      "subjects": {
+        "classes": [
+          "element_fluorine"
+        ],
+        "groups": [
+          "periodic/halogens"
+        ],
+        "abilities": [
+          "halogen_corrosion",
+          "chain_discharge"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "halogen_corrosion",
+          "chain_discharge"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_chlorine",
+      "title": "Chlorine Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "halogens",
+        "Chlorine"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "halogens"
+      },
+      "body": [
+        "Chlorine translates those numbers into corrosive cloud, area denial fumes, and toxicity mastery; Mass 35.45 u, stability 0.50, charge -1.000e. Reactivity 0.95.",
+        "Core ability focus: Halogen Corrosion, Refraction Cloak. Watch for Chemical Vat. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Chlorine carries -1.000e with 35.45 u and reactivity 0.95, turning Halogen Corrosion, Refraction Cloak into reliable counters against Chemical Vat.",
+      "subjects": {
+        "classes": [
+          "element_chlorine"
+        ],
+        "groups": [
+          "periodic/halogens"
+        ],
+        "abilities": [
+          "halogen_corrosion",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "halogen_corrosion",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_iodine",
+      "title": "Iodine Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "halogens",
+        "Iodine"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "halogens"
+      },
+      "body": [
+        "Iodine translates those numbers into corrosive cloud, vision warping hexes, and toxicity mastery; Mass 126.90 u, stability 0.60, charge -1.000e. Reactivity 0.85.",
+        "Core ability focus: Halogen Corrosion, Refraction Cloak. Watch for Chemical Vat, Radiation Zone. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Iodine carries -1.000e with 126.90 u and reactivity 0.85, turning Halogen Corrosion, Refraction Cloak into reliable counters against Chemical Vat and Radiation Zone.",
+      "subjects": {
+        "classes": [
+          "element_iodine"
+        ],
+        "groups": [
+          "periodic/halogens"
+        ],
+        "abilities": [
+          "halogen_corrosion",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "chemical_vat",
+          "radiation_zone"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "halogen_corrosion",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "chemical_vat",
+          "radiation_zone"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_helium",
+      "title": "Helium Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "noble gases",
+        "Helium"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "noble_gases"
+      },
+      "body": [
+        "Helium translates those numbers into inert shielding support, levitation auras, and crowd confusion tactics; Mass 4.00 u, stability 0.95, neutral charge. Reactivity 0.05.",
+        "Core ability focus: Noble Gas Barrier, Refraction Cloak. Watch for Electric Field. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Helium remains electrically neutral with 4.00 u and reactivity 0.05, turning Noble Gas Barrier, Refraction Cloak into reliable counters against Electric Field.",
+      "subjects": {
+        "classes": [
+          "element_helium"
+        ],
+        "groups": [
+          "periodic/noble_gases"
+        ],
+        "abilities": [
+          "noble_gas_barrier",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "electric_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "noble_gas_barrier",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "electric_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_neon",
+      "title": "Neon Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "noble gases",
+        "Neon"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "noble_gases"
+      },
+      "body": [
+        "Neon translates those numbers into inert shielding support, light-control zoning, and crowd confusion tactics; Mass 20.18 u, stability 0.96, neutral charge. Reactivity 0.05.",
+        "Core ability focus: Noble Gas Barrier, Photon Dash. Watch for Electric Field. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Neon remains electrically neutral with 20.18 u and reactivity 0.05, turning Noble Gas Barrier, Photon Dash into reliable counters against Electric Field.",
+      "subjects": {
+        "classes": [
+          "element_neon"
+        ],
+        "groups": [
+          "periodic/noble_gases"
+        ],
+        "abilities": [
+          "noble_gas_barrier",
+          "photon_dash"
+        ],
+        "hazards": [
+          "electric_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "noble_gas_barrier",
+          "photon_dash"
+        ],
+        "hazards": [
+          "electric_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_argon",
+      "title": "Argon Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "noble gases",
+        "Argon"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "noble_gases"
+      },
+      "body": [
+        "Argon translates those numbers into inert shielding support, shielding fields, and light-control zoning; Mass 39.95 u, stability 0.97, neutral charge. Reactivity 0.05.",
+        "Core ability focus: Noble Gas Barrier, Neutral Screen. Watch for Electric Field, Charged Field. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Argon remains electrically neutral with 39.95 u and reactivity 0.05, turning Noble Gas Barrier, Neutral Screen into reliable counters against Electric Field and Charged Field.",
+      "subjects": {
+        "classes": [
+          "element_argon"
+        ],
+        "groups": [
+          "periodic/noble_gases"
+        ],
+        "abilities": [
+          "noble_gas_barrier",
+          "neutral_screen"
+        ],
+        "hazards": [
+          "electric_field",
+          "charged_field"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "noble_gas_barrier",
+          "neutral_screen"
+        ],
+        "hazards": [
+          "electric_field",
+          "charged_field"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_iron",
+      "title": "Iron Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "transition metals",
+        "Iron"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "transition_metals"
+      },
+      "body": [
+        "Iron translates those numbers into magnetic control pulls, heavy armour plating, and forge mastery; Mass 55.85 u, stability 0.80, charge +2.000e. Reactivity 0.50.",
+        "Core ability focus: Mass Anchor, Color Field. Watch for Magnetic Trap. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Iron carries +2.000e with 55.85 u and reactivity 0.50, turning Mass Anchor, Color Field into reliable counters against Magnetic Trap.",
+      "subjects": {
+        "classes": [
+          "element_iron"
+        ],
+        "groups": [
+          "periodic/transition_metals"
+        ],
+        "abilities": [
+          "mass_anchor",
+          "color_field"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "mass_anchor",
+          "color_field"
+        ],
+        "hazards": [
+          "magnetic_trap"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_copper",
+      "title": "Copper Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "transition metals",
+        "Copper"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "transition_metals"
+      },
+      "body": [
+        "Copper translates those numbers into magnetic control pulls, conductive utility, and trade windfalls; Mass 63.55 u, stability 0.82, charge +1.000e. Reactivity 0.55.",
+        "Core ability focus: Color Field, Ion Field. Watch for Electric Field, Magnetic Trap. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Copper carries +1.000e with 63.55 u and reactivity 0.55, turning Color Field, Ion Field into reliable counters against Electric Field and Magnetic Trap.",
+      "subjects": {
+        "classes": [
+          "element_copper"
+        ],
+        "groups": [
+          "periodic/transition_metals"
+        ],
+        "abilities": [
+          "color_field",
+          "ion_field"
+        ],
+        "hazards": [
+          "electric_field",
+          "magnetic_trap"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "color_field",
+          "ion_field"
+        ],
+        "hazards": [
+          "electric_field",
+          "magnetic_trap"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_gold",
+      "title": "Gold Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "transition metals",
+        "Gold"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "transition_metals"
+      },
+      "body": [
+        "Gold translates those numbers into magnetic control pulls, luck aura, and trade windfalls; Mass 196.97 u, stability 0.90, charge +1.000e. Reactivity 0.30.",
+        "Core ability focus: Color Field, Refraction Cloak. Watch for Magnetic Trap, Chemical Vat. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Gold carries +1.000e with 196.97 u and reactivity 0.30, turning Color Field, Refraction Cloak into reliable counters against Magnetic Trap and Chemical Vat.",
+      "subjects": {
+        "classes": [
+          "element_gold"
+        ],
+        "groups": [
+          "periodic/transition_metals"
+        ],
+        "abilities": [
+          "color_field",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "magnetic_trap",
+          "chemical_vat"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "color_field",
+          "refraction_cloak"
+        ],
+        "hazards": [
+          "magnetic_trap",
+          "chemical_vat"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_uranium",
+      "title": "Uranium Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "radioactive metals",
+        "Uranium"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "radioactive_metals"
+      },
+      "body": [
+        "Uranium translates those numbers into radiation area control, delayed burst detonations, and hazard zoning; Mass 238.03 u, stability 0.20, charge +6.000e. Reactivity 0.92.",
+        "Core ability focus: Beta Cascade, Annihilation Wave. Watch for Fission Reactor Core, Radiation Zone. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Uranium carries +6.000e with 238.03 u and reactivity 0.92, turning Beta Cascade, Annihilation Wave into reliable counters against Fission Reactor Core and Radiation Zone.",
+      "subjects": {
+        "classes": [
+          "element_uranium"
+        ],
+        "groups": [
+          "periodic/radioactive_metals"
+        ],
+        "abilities": [
+          "beta_decay",
+          "annihilation_wave"
+        ],
+        "hazards": [
+          "nuclear_reactor",
+          "radiation_zone"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "beta_decay",
+          "annihilation_wave"
+        ],
+        "hazards": [
+          "nuclear_reactor",
+          "radiation_zone"
+        ]
+      }
+    },
+    {
+      "id": "codex_class_element_thorium",
+      "title": "Thorium Field Log",
+      "category": "Periodic Table",
+      "tags": [
+        "radioactive metals",
+        "Thorium"
+      ],
+      "unlock": {
+        "type": "group",
+        "category": "periodic",
+        "group": "radioactive_metals"
+      },
+      "body": [
+        "Thorium translates those numbers into radiation area control, reactor support, and hazard zoning; Mass 232.04 u, stability 0.35, charge +4.000e. Reactivity 0.85.",
+        "Core ability focus: Weak Flux, Beta Cascade. Watch for Radiation Zone, Fission Reactor Core. Managing physics interactions keeps their kit stable."
+      ],
+      "highlight": "Thorium carries +4.000e with 232.04 u and reactivity 0.85, turning Weak Flux, Beta Cascade into reliable counters against Radiation Zone and Fission Reactor Core.",
+      "subjects": {
+        "classes": [
+          "element_thorium"
+        ],
+        "groups": [
+          "periodic/radioactive_metals"
+        ],
+        "abilities": [
+          "weak_flux",
+          "beta_decay"
+        ],
+        "hazards": [
+          "radiation_zone",
+          "nuclear_reactor"
+        ]
+      },
+      "links": {
+        "abilities": [
+          "weak_flux",
+          "beta_decay"
+        ],
+        "hazards": [
+          "radiation_zone",
+          "nuclear_reactor"
+        ]
+      }
+    }
+  ]
+}
