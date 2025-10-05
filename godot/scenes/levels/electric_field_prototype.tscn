@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/hazards/electric_field.tscn" id="2"]
-[ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="3" uid="uid://bryr478pcwtbl"]
 
 [node name="ElectricFieldPrototype" type="Node2D"]
 

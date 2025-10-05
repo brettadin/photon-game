@@ -1,9 +1,9 @@
 [gd_resource type="Resource" load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/abilities/z_pulse.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/abilities/neutral_screen.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/abilities/annihilation_wave.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1" uid="uid://d3u3gp8i1aw2r"]
+[ext_resource type="Script" path="res://scripts/abilities/z_pulse.gd" id="2" uid="uid://bw6lknx7uack3"]
+[ext_resource type="Script" path="res://scripts/abilities/neutral_screen.gd" id="3" uid="uid://dv7swwx1w11ep"]
+[ext_resource type="Script" path="res://scripts/abilities/annihilation_wave.gd" id="4" uid="uid://ia1gmlavgohk"]
 
 [resource]
 script = ExtResource("1")

@@ -1,9 +1,9 @@
 [gd_resource type="Resource" load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/abilities/orbital_strike.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/abilities/ion_field.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/abilities/chain_discharge.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1" uid="uid://d3u3gp8i1aw2r"]
+[ext_resource type="Script" path="res://scripts/abilities/orbital_strike.gd" id="2" uid="uid://b8471e032hbg7"]
+[ext_resource type="Script" path="res://scripts/abilities/ion_field.gd" id="3" uid="uid://clpf76j5y4jw4"]
+[ext_resource type="Script" path="res://scripts/abilities/chain_discharge.gd" id="4" uid="uid://dy5hsg0n8tkuc"]
 
 [resource]
 script = ExtResource("1")

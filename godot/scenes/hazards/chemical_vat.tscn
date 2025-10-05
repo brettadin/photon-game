@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/hazards/chemical_vat.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/hazards/chemical_vat.gd" id="1" uid="uid://bp70eqxbged0s"]
 
 [sub_resource type="RectangleShape2D" id="1"]
 extents = Vector2(140, 120)
