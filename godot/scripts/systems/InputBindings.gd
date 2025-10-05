@@ -1,6 +1,4 @@
 extends Node
-
-var _engine_input_map := Engine.get_singleton("InputMap")
 var DEFAULT_ACTIONS := {
     &"move_left": {
         "keys": [Key.KEY_A, Key.KEY_LEFT],
@@ -29,9 +27,6 @@ var DEFAULT_ACTIONS := {
 }
 
 func _ready() -> void:
-    if _engine_input_map == null:
-        push_warning("InputBindings autoload: Engine InputMap singleton is unavailable.")
-        return
     apply_default_bindings()
 
 func apply_default_bindings() -> void:
@@ -39,47 +34,37 @@ func apply_default_bindings() -> void:
         _register_action(action_name, DEFAULT_ACTIONS[action_name])
 
 func reset_action(action_name: StringName) -> void:
-    if _engine_input_map == null:
-        return
-    if _engine_input_map.has_action(action_name):
-        _engine_input_map.action_erase_events(action_name)
+    if InputMap.has_action(action_name):
+        InputMap.action_erase_events(action_name)
     else:
-        _engine_input_map.add_action(action_name)
+        InputMap.add_action(action_name)
 
 func register_custom_action(action_name: StringName, events: Array) -> void:
-    if _engine_input_map == null:
-        return
     reset_action(action_name)
     for input_event in events:
-        _engine_input_map.action_add_event(action_name, input_event)
+        InputMap.action_add_event(action_name, input_event)
 
 func _register_action(action_name: StringName, definition: Dictionary) -> void:
-    if _engine_input_map == null:
-        return
     reset_action(action_name)
     for keycode in definition.get("keys", []):
         var key_event := InputEventKey.new()
         key_event.physical_keycode = int(keycode)
-        _engine_input_map.action_add_event(action_name, key_event)
+        InputMap.action_add_event(action_name, key_event)
     for button in definition.get("joypad_buttons", []):
         var button_event := InputEventJoypadButton.new()
         button_event.button_index = int(button)
-        _engine_input_map.action_add_event(action_name, button_event)
+        InputMap.action_add_event(action_name, button_event)
     for axis_data in definition.get("joypad_axes", []):
         var motion_event := InputEventJoypadMotion.new()
         motion_event.axis = int(axis_data.get("axis", JOY_AXIS_LEFT_X))
         motion_event.axis_value = float(axis_data.get("value", 0.0))
-        _engine_input_map.action_add_event(action_name, motion_event)
+        InputMap.action_add_event(action_name, motion_event)
 
 func get_action_events(action_name: StringName) -> Array:
-    if _engine_input_map == null:
+    if not InputMap.has_action(action_name):
         return []
-    if not _engine_input_map.has_action(action_name):
-        return []
-    return _engine_input_map.action_get_events(action_name)
+    return InputMap.action_get_events(action_name)
 
 func ensure_action(action_name: StringName) -> void:
-    if _engine_input_map == null:
-        return
-    if not _engine_input_map.has_action(action_name):
-        _engine_input_map.add_action(action_name)
+    if not InputMap.has_action(action_name):
+        InputMap.add_action(action_name)
