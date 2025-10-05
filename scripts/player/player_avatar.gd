@@ -29,6 +29,7 @@ var current_keywords: Array[StringName] = []
 var mass: float = 1.0
 var charge: float = 0.0
 var stability: float = 1.0
+var class_tags: Array[StringName] = []
 
 var resource_pools: Dictionary = {}
 var status_manager: StatusManager = null
@@ -60,6 +61,12 @@ func set_particle_class(value: ParticleClassDefinition) -> void:
         mass = particle_class.mass
         charge = particle_class.charge
         stability = particle_class.stability
+        class_tags.clear()
+        for tag in particle_class.class_tags:
+            if typeof(tag) == TYPE_STRING_NAME:
+                class_tags.append(tag)
+            else:
+                class_tags.append(StringName(tag))
         _initialize_resources()
         var loadout := particle_class.create_loadout()
         for slot in loadout:
@@ -68,6 +75,7 @@ func set_particle_class(value: ParticleClassDefinition) -> void:
         mass = 1.0
         charge = 0.0
         stability = 1.0
+        class_tags.clear()
         _initialize_resources()
     _update_instability_factor()
     _update_status_immunities()
@@ -268,6 +276,19 @@ func get_stat(stat: StringName) -> float:
 
 func has_keyword(keyword: StringName) -> bool:
     return keyword in current_keywords
+
+func has_class_tag(tag: StringName) -> bool:
+    tag = StringName(tag)
+    return tag in class_tags
+
+func has_any_class_tag(tags: Array) -> bool:
+    for tag in tags:
+        if has_class_tag(StringName(tag)):
+            return true
+    return false
+
+func get_class_tags() -> Array[StringName]:
+    return class_tags.duplicate()
 
 func _ensure_status_manager() -> void:
     if status_manager:

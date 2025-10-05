@@ -117,6 +117,14 @@ func _build_particle_class(class_data: Dictionary) -> ParticleClassDefinition:
     definition.id = StringName(class_data.get("id", ""))
     definition.display_name = String(class_data.get("display_name", ""))
     definition.description = String(class_data.get("lore", ""))
+    definition.class_tags.clear()
+    var ability_tags := class_data.get("ability_tags", [])
+    if typeof(ability_tags) == TYPE_ARRAY:
+        for tag in ability_tags:
+            if typeof(tag) == TYPE_STRING_NAME:
+                definition.class_tags.append(tag)
+            elif typeof(tag) == TYPE_STRING:
+                definition.class_tags.append(StringName(tag))
 
     var base_stats := class_data.get("base_stats", {})
     if typeof(base_stats) == TYPE_DICTIONARY:

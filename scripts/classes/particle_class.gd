@@ -16,6 +16,7 @@ class_name ParticleClassDefinition
 @export var active_ability: Script
 @export var passive_ability: Script
 @export var ultimate_ability: Script
+@export var class_tags: Array[StringName] = []
 
 func _instantiate_ability(script: Script) -> ParticleAbility:
     if script == null:
