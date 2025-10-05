@@ -1,1 +1,2 @@
-/godot
+# Ignore Godot generated import cache
+/godot/.import/
