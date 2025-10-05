@@ -1,2 +1,7 @@
 # Ignore Godot generated import cache
 /godot/.import/
+
+# Prevent mistakenly placing game content outside the Godot project root
+/data/
+/scenes/
+/scripts/
