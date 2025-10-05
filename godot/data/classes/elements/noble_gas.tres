@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ParticleClass" load_steps=2]
 
-[ext_resource type="Script" path="res://scripts/resources/particle_class.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/resources/particle_class.gd" id="1" uid="uid://b1roasqjk2lpy"]
 
 [resource]
 script = ExtResource("1")

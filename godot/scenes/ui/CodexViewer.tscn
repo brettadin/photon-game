@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/codex_viewer.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/codex_viewer.gd" id="1" uid="uid://dtje67hssf6yn"]
 
 [node name="CodexViewer" type="Control"]
 anchor_right = 1.0

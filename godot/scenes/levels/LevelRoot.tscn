@@ -1,7 +1,7 @@
 [gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
-[ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="2" uid="uid://bryr478pcwtbl"]
 [ext_resource type="PackedScene" path="res://scenes/levels/electromagnetism_lab.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/hazards/chemical_vat.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/hazards/magnetic_trap.tscn" id="5"]

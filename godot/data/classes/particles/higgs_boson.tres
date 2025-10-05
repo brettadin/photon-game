@@ -1,9 +1,9 @@
 [gd_resource type="Resource" load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/abilities/higgs_mass_boost.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/abilities/inertial_field.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/abilities/higgs_resonance.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1" uid="uid://d3u3gp8i1aw2r"]
+[ext_resource type="Script" path="res://scripts/abilities/higgs_mass_boost.gd" id="2" uid="uid://dh8cxupu4x1tc"]
+[ext_resource type="Script" path="res://scripts/abilities/inertial_field.gd" id="3" uid="uid://b4trxsqd4ncrm"]
+[ext_resource type="Script" path="res://scripts/abilities/higgs_resonance.gd" id="4" uid="uid://cxdw7tqwsnrv3"]
 
 [resource]
 script = ExtResource("1")

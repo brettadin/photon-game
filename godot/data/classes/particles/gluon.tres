@@ -1,9 +1,9 @@
 [gd_resource type="Resource" load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/abilities/gluon_bind.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/abilities/color_field.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/abilities/fusion_lock.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1" uid="uid://d3u3gp8i1aw2r"]
+[ext_resource type="Script" path="res://scripts/abilities/gluon_bind.gd" id="2" uid="uid://c6s5k2sqqbxcl"]
+[ext_resource type="Script" path="res://scripts/abilities/color_field.gd" id="3" uid="uid://cyh18qcpyqjxi"]
+[ext_resource type="Script" path="res://scripts/abilities/fusion_lock.gd" id="4" uid="uid://dlrpk1bex26fj"]
 
 [resource]
 script = ExtResource("1")

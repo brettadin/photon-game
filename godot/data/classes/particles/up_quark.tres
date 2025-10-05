@@ -1,9 +1,9 @@
 [gd_resource type="Resource" load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/abilities/color_dash.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/abilities/fractional_charge.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/abilities/hadronize.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1" uid="uid://d3u3gp8i1aw2r"]
+[ext_resource type="Script" path="res://scripts/abilities/color_dash.gd" id="2" uid="uid://q8r36f6qvg3i"]
+[ext_resource type="Script" path="res://scripts/abilities/fractional_charge.gd" id="3" uid="uid://bp4tsr5mlpf4h"]
+[ext_resource type="Script" path="res://scripts/abilities/hadronize.gd" id="4" uid="uid://cmvgrjs85t3gf"]
 
 [resource]
 script = ExtResource("1")

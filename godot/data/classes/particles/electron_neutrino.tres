@@ -1,9 +1,9 @@
 [gd_resource type="Resource" load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/abilities/phase_shift.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/abilities/ghost_walk.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/abilities/weak_flux.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/classes/particle_class.gd" id="1" uid="uid://d3u3gp8i1aw2r"]
+[ext_resource type="Script" path="res://scripts/abilities/phase_shift.gd" id="2" uid="uid://dhsnr50xunftc"]
+[ext_resource type="Script" path="res://scripts/abilities/ghost_walk.gd" id="3" uid="uid://xub1qcd57yyn"]
+[ext_resource type="Script" path="res://scripts/abilities/weak_flux.gd" id="4" uid="uid://8k1rsd45ae3l"]
 
 [resource]
 script = ExtResource("1")
