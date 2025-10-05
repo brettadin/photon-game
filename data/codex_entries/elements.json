@@ -1,0 +1,26 @@
+{
+  "entries": [
+    {
+      "id": "codex_periodic_loadouts",
+      "title": "Elemental Loadouts",
+      "category": "Elements",
+      "tags": ["chemistry", "periodic table"],
+      "unlock": {"type": "category", "category": "periodic"},
+      "body": [
+        "Element archetypes translate trends from the periodic table into combat behaviours. Alkali metals burst with reactivity, alkaline earth metals stabilise allies, chalcogens feed combustion, halogens corrode, noble gases shield, and heavy transition or radioactive metals anchor objectives with sheer inertia.",
+        "Atomic mass and charge determine how much punishment an elemental loadout can absorb before destabilising. Higher atomic masses slow you down but extend the duration of crowd control and shields. Positive ionic charges bias your kit toward conductive traps, while negative charges favour corrosive debuffs and energy siphons."
+      ]
+    },
+    {
+      "id": "codex_handling_reactivity",
+      "title": "Handling Reactivity Safely",
+      "category": "Elements",
+      "tags": ["chemistry", "reactivity"],
+      "unlock": {"type": "group", "category": "periodic", "group": "alkali_metals"},
+      "body": [
+        "Highly reactive metals such as lithium, sodium, and potassium want to shed their valence electron. In the arena that eagerness appears as volatile dash trails, explosive puddles, and rapid self-oxidation timers. Manage those timers or quench them with coolant pickups to keep your damage spikes controllable.",
+        "Reacting with water or oxidisers can be both a blessing and a hazard. Trigger the interaction on your own terms—use conductive surfaces to chain lightning before the instability burns through your shields. Completing more runs unlocks stabilisers that let you wield these elements longer before they tear themselves apart."
+      ]
+    }
+  ]
+}

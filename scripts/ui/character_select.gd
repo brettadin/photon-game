@@ -5,9 +5,13 @@ const ClassDatabase := preload("res://scripts/data/class_database.gd")
 const UnlockManager := preload("res://scripts/progression/unlock_manager.gd")
 
 signal class_chosen(class_data: Dictionary)
+signal codex_requested
 
-@onready var _class_list: VBoxContainer = %ClassList
 @onready var _status_label: Label = %StatusLabel
+@onready var _tab_container: TabContainer = %RosterTabs
+@onready var _standard_model_list: VBoxContainer = %StandardModelList
+@onready var _element_list: VBoxContainer = %ElementList
+@onready var _codex_button: Button = %CodexButton
 
 var _database: ClassDatabase
 var _unlock_manager: UnlockManager
@@ -65,24 +69,51 @@ func _ready() -> void:
         _database = ClassDatabase.new()
     if _unlock_manager == null:
         _unlock_manager = UnlockManager.new()
+    if is_instance_valid(_codex_button):
+        _codex_button.pressed.connect(_on_codex_button_pressed)
+    _configure_tab_titles()
     _refresh_entries()
 
-func _refresh_entries() -> void:
-    if not is_instance_valid(_class_list):
+func _configure_tab_titles() -> void:
+    if not is_instance_valid(_tab_container):
         return
-    for child in _class_list.get_children():
-        child.queue_free()
+    var standard_scroll := _standard_model_list.get_parent()
+    if standard_scroll and standard_scroll is Control:
+        var idx := _tab_container.get_tab_idx_from_control(standard_scroll)
+        if idx >= 0:
+            _tab_container.set_tab_title(idx, "Standard Model")
+    var element_scroll := _element_list.get_parent()
+    if element_scroll and element_scroll is Control:
+        var element_idx := _tab_container.get_tab_idx_from_control(element_scroll)
+        if element_idx >= 0:
+            _tab_container.set_tab_title(element_idx, "Elements")
+
+func _refresh_entries() -> void:
+    if not is_instance_valid(_standard_model_list) or not is_instance_valid(_element_list):
+        return
+    _clear_container(_standard_model_list)
+    _clear_container(_element_list)
     if _database == null:
         return
-    var categories := _database.get_categories()
-    categories.sort()
-    for category in categories:
-        _class_list.add_child(_create_category_header(category))
-        var entries := _database.get_classes_in_category(category)
+    _populate_category("standard_model", _standard_model_list)
+    _populate_category("periodic", _element_list)
+    _status_label.text = "Select a particle archetype to begin."
+
+func _clear_container(container: Container) -> void:
+    for child in container.get_children():
+        child.queue_free()
+
+func _populate_category(category: String, container: VBoxContainer) -> void:
+    if container == null:
+        return
+    var groups := _database.get_category_groups(category)
+    groups.sort()
+    for group_name in groups:
+        container.add_child(_create_category_header(group_name))
+        var entries := _database.get_classes_in_group(category, group_name)
         for entry in entries:
             var panel := _create_class_panel(entry)
-            _class_list.add_child(panel)
-    _status_label.text = "Select a particle archetype to begin."
+            container.add_child(panel)
 
 func _create_category_header(category: String) -> Control:
     var label := Label.new()
@@ -97,6 +128,8 @@ func _create_class_panel(entry: Dictionary) -> PanelContainer:
     var panel := PanelContainer.new()
     panel.name = String(entry.get("id", ""))
     panel.custom_minimum_size = Vector2(0, 160)
+    panel.mouse_filter = Control.MOUSE_FILTER_PASS
+    panel.tooltip_text = _build_tooltip(entry)
     var wrapper := VBoxContainer.new()
     wrapper.alignment = BoxContainer.ALIGNMENT_BEGIN
     wrapper.add_theme_constant_override("separation", 6)
@@ -114,6 +147,7 @@ func _create_class_panel(entry: Dictionary) -> PanelContainer:
     var unlocked := _unlock_manager.is_class_unlocked(entry)
     select_button.text = unlocked ? "Select" : "Locked"
     select_button.disabled = not unlocked
+    select_button.tooltip_text = panel.tooltip_text
     select_button.pressed.connect(_on_class_selected.bind(entry, panel))
     header.add_child(select_button)
     wrapper.add_child(header)
@@ -162,6 +196,9 @@ func _on_class_selected(entry: Dictionary, panel: PanelContainer) -> void:
     _status_label.text = "Selected: %s" % entry.get("display_name", "Unknown")
     emit_signal("class_chosen", entry.duplicate(true))
 
+func _on_codex_button_pressed() -> void:
+    emit_signal("codex_requested")
+
 func _highlight_panel(panel: PanelContainer) -> void:
     if is_instance_valid(_selected_panel):
         _selected_panel.remove_theme_stylebox_override("panel")
@@ -205,3 +242,37 @@ func _format_stat_value(value) -> String:
             return str(int(value))
         _:
             return str(value)
+
+func _build_tooltip(entry: Dictionary) -> String:
+    var stats := entry.get("base_stats", {})
+    var mass_text := "Unknown"
+    if typeof(stats) == TYPE_DICTIONARY:
+        if stats.has("mass_mev"):
+            mass_text = "%s MeV/c²" % _format_stat_value(stats["mass_mev"])
+        elif stats.has("atomic_mass"):
+            mass_text = "%s u" % _format_stat_value(stats["atomic_mass"])
+    var charge_value = 0.0
+    var has_charge := false
+    if typeof(stats) == TYPE_DICTIONARY and stats.has("charge"):
+        charge_value = float(stats["charge"])
+        has_charge = true
+    var charge_text := has_charge ? _format_charge(charge_value) : "Neutral"
+    var spin_text := "N/A"
+    if typeof(stats) == TYPE_DICTIONARY and stats.has("spin"):
+        spin_text = _format_stat_value(stats["spin"])
+    var flavor := String(entry.get("lore", ""))
+    var lines := []
+    lines.append("Mass: %s" % mass_text)
+    lines.append("Charge: %s" % charge_text)
+    lines.append("Spin: %s" % spin_text)
+    if not flavor.is_empty():
+        lines.append("")
+        lines.append(flavor)
+    return "\n".join(lines)
+
+func _format_charge(value: float) -> String:
+    if is_equal_approx(value, 0.0):
+        return "0"
+    if value > 0.0:
+        return "+%s" % _format_stat_value(value)
+    return _format_stat_value(value)
