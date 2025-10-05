@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player_avatar.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/hazards/radiation_zone.tscn" id="2"]
 [ext_resource type="Resource" path="res://data/classes/particles/electron_neutrino.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/game/game_controller.gd" id="4"]
 
 [node name="RadiationZonePrototype" type="Node2D"]
 
@@ -15,3 +16,7 @@ particle_class = ExtResource("3")
 
 [node name="RadiationZone" parent="." instance=ExtResource("2")]
 position = Vector2(0, 0)
+
+[node name="GameController" type="Node" parent="."]
+script = ExtResource("4")
+player_path = NodePath("../Electron")
