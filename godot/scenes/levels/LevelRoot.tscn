@@ -39,12 +39,13 @@ current = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="GameController" type="CanvasLayer" parent="."]
+[node name="GameController" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("2")
 player_path = NodePath("../Player")
 
-[node name="RunHUD" parent="." instance=ExtResource("9")]
+[node name="RunHUD" parent="GameController" instance=ExtResource("9")]
+unique_name_in_owner = true
 
 [node name="StageContent" type="Node2D" parent="."]
 unique_name_in_owner = true
