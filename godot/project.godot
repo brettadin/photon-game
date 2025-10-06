@@ -13,7 +13,7 @@ run/main_scene="res://scenes/levels/LevelRoot.tscn"
 
 RunRNG="*res://scripts/systems/RunRNG.gd"
 GameState="*res://scripts/systems/GameState.gd"
-InputMap="*res://scripts/systems/InputMap.gd"
+InputBindings="*res://scripts/systems/InputBindings.gd"
 
 [display]
 
