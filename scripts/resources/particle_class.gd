@@ -20,7 +20,8 @@ enum ElementGroup {
     RADIOACTIVE,
 }
 
-@export var element_group: ElementGroup = ElementGroup.NONE setget set_element_group
+@export var element_group: ElementGroup = ElementGroup.NONE:
+    set = set_element_group
 
 ## Baseline stats supplied by the particle class itself.
 @export var base_reactivity: float = 1.0

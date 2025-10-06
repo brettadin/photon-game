@@ -24,7 +24,8 @@ signal self_damage_taken(amount: float, payload: Dictionary)
 }
 @export var base_keywords: Array[StringName] = []
 
-@export var particle_class: ParticleClassDefinition = null setget set_particle_class
+@export var particle_class: ParticleClassDefinition = null:
+    set = set_particle_class
 var current_stats: Dictionary = {}
 var current_keywords: Array[StringName] = []
 var mass: float = 1.0

@@ -8,7 +8,9 @@ signal self_damage_triggered(payload: Dictionary)
 
 @export var host: Node = null
 @export var immunity_flags: Dictionary = {}
-@export var instability_factor: float = 0.0 setget set_instability_factor, get_instability_factor
+@export var instability_factor: float = 0.0:
+    set = set_instability_factor
+    get = get_instability_factor
 
 var _statuses: Dictionary = {}
 var _instability_factor: float = 0.0
