@@ -391,7 +391,7 @@ func _update_instability_factor() -> void:
     var stability_pool: Dictionary = resource_pools.get(&"stability", {})
     var max_amount := float(stability_pool.get("max", 0.0))
     if max_amount > 0.0:
-        var ratio := float(stability_pool.get("current", max_amount)) / max_amount
+        var ratio: float = float(stability_pool.get("current", max_amount)) / max_amount
         baseline = max(baseline, 1.0 - ratio)
     status_manager.set_instability_factor(baseline)
 
