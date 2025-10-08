@@ -1,8 +1,8 @@
 extends CharacterBody2D
 class_name PlayerAvatar
 
-const StatusManager := preload("res://scripts/combat/status_manager.gd")
-const AbilityCatalog := preload("res://scripts/abilities/ability_catalog.gd")
+const STATUS_MANAGER_SCRIPT := preload("res://scripts/combat/status_manager.gd")
+const ABILITY_CATALOG := preload("res://scripts/abilities/ability_catalog.gd")
 const LEPTON_IDS := {
     StringName("electron"): true,
     StringName("electron_neutrino"): true,
@@ -24,7 +24,13 @@ signal self_damage_taken(amount: float, payload: Dictionary)
 }
 @export var base_keywords: Array[StringName] = []
 
-@export var particle_class: ParticleClassDefinition = null setget set_particle_class
+var _particle_class: ParticleClassDefinition = null
+
+@export var particle_class: ParticleClassDefinition = null:
+    set(value):
+        set_particle_class(value)
+    get:
+        return _particle_class
 var current_stats: Dictionary = {}
 var current_keywords: Array[StringName] = []
 var mass: float = 1.0
@@ -35,11 +41,11 @@ var class_tags: Array[StringName] = []
 var resource_pools: Dictionary = {}
 var status_manager: StatusManager = null
 
-var _abilities := {}
-var _profiles := {}
-var _profile_sources := {}
+var _abilities: Dictionary = {}
+var _profiles: Dictionary = {}
+var _profile_sources: Dictionary = {}
 var _profile_uid := 0
-var _ability_overrides := {}
+var _ability_overrides: Dictionary = {}
 
 func _enter_tree() -> void:
     _ensure_status_manager()
@@ -49,30 +55,30 @@ func _ready() -> void:
     _initialize_resources()
     _update_instability_factor()
     if particle_class:
-        var initial := particle_class
+        var initial: ParticleClassDefinition = particle_class
         particle_class = null
         set_particle_class(initial)
 
 func set_particle_class(value: ParticleClassDefinition) -> void:
     _ensure_status_manager()
-    if value == particle_class:
+    if value == _particle_class:
         return
     _clear_abilities()
-    particle_class = value
-    if particle_class:
-        mass = particle_class.mass
-        charge = particle_class.charge
-        stability = particle_class.stability
+    _particle_class = value
+    if _particle_class:
+        mass = _particle_class.mass
+        charge = _particle_class.charge
+        stability = _particle_class.stability
         class_tags.clear()
-        for tag in particle_class.class_tags:
+        for tag in _particle_class.class_tags:
             if typeof(tag) == TYPE_STRING_NAME:
                 class_tags.append(tag)
             else:
                 class_tags.append(StringName(tag))
         _initialize_resources()
-        var loadout := particle_class.create_loadout()
+        var loadout: Dictionary = _particle_class.create_loadout()
         for slot in loadout:
-            _set_ability(slot, loadout[slot])
+            _set_ability(StringName(slot), loadout[slot])
     else:
         mass = 1.0
         charge = 0.0
@@ -81,13 +87,13 @@ func set_particle_class(value: ParticleClassDefinition) -> void:
         _initialize_resources()
     _update_instability_factor()
     _update_status_immunities()
-    emit_signal("class_changed", particle_class)
+    emit_signal("class_changed", _particle_class)
 
 func get_status_manager() -> StatusManager:
     return status_manager
 
-func set_resource(name: StringName, current: float, maximum: float) -> void:
-    name = StringName(name)
+func set_resource(resource_name: StringName, current: float, maximum: float) -> void:
+    var normalized_name := StringName(resource_name)
     maximum = max(maximum, 0.0)
     var pool := {
         "current": clamp(current, 0.0, maximum if maximum > 0.0 else current),
@@ -95,14 +101,14 @@ func set_resource(name: StringName, current: float, maximum: float) -> void:
     }
     if maximum <= 0.0:
         pool["current"] = max(current, 0.0)
-    resource_pools[name] = pool
-    emit_signal("resource_changed", name, pool["current"], pool["max"])
-    if name == &"stability":
+    resource_pools[normalized_name] = pool
+    emit_signal("resource_changed", normalized_name, pool["current"], pool["max"])
+    if normalized_name == &"stability":
         _update_instability_factor()
 
-func modify_resource(name: StringName, delta: float) -> void:
-    name = StringName(name)
-    var pool: Dictionary = resource_pools.get(name, {})
+func modify_resource(resource_name: StringName, delta: float) -> void:
+    var normalized_name := StringName(resource_name)
+    var pool: Dictionary = resource_pools.get(normalized_name, {})
     var max_amount := float(pool.get("max", 0.0))
     var current := float(pool.get("current", 0.0)) + delta
     if max_amount > 0.0:
@@ -112,48 +118,48 @@ func modify_resource(name: StringName, delta: float) -> void:
         max_amount = max(max_amount, current)
     pool["current"] = current
     pool["max"] = max_amount
-    resource_pools[name] = pool
-    emit_signal("resource_changed", name, current, max_amount)
-    if name == &"stability":
+    resource_pools[normalized_name] = pool
+    emit_signal("resource_changed", normalized_name, current, max_amount)
+    if normalized_name == &"stability":
         _update_instability_factor()
 
-func get_resource_amount(name: StringName) -> float:
-    name = StringName(name)
-    var pool: Dictionary = resource_pools.get(name, {})
+func get_resource_amount(resource_name: StringName) -> float:
+    var normalized_name := StringName(resource_name)
+    var pool: Dictionary = resource_pools.get(normalized_name, {})
     return float(pool.get("current", 0.0))
 
-func get_resource_capacity(name: StringName) -> float:
-    name = StringName(name)
-    var pool: Dictionary = resource_pools.get(name, {})
+func get_resource_capacity(resource_name: StringName) -> float:
+    var normalized_name := StringName(resource_name)
+    var pool: Dictionary = resource_pools.get(normalized_name, {})
     return float(pool.get("max", 0.0))
 
 func has_resources(costs: Dictionary) -> bool:
-    for name in costs.keys():
-        if get_resource_amount(StringName(name)) + 0.0001 < float(costs[name]):
+    for cost_name in costs.keys():
+        if get_resource_amount(StringName(cost_name)) + 0.0001 < float(costs[cost_name]):
             return false
     return true
 
 func get_missing_resources(costs: Dictionary) -> Dictionary:
     var missing := {}
-    for name in costs.keys():
-        var required := float(costs[name])
-        var available := get_resource_amount(StringName(name))
+    for cost_name in costs.keys():
+        var required := float(costs[cost_name])
+        var available := get_resource_amount(StringName(cost_name))
         if available + 0.0001 < required:
-            missing[name] = required - available
+            missing[cost_name] = required - available
     return missing
 
 func apply_resource_costs(costs: Dictionary) -> bool:
     if not has_resources(costs):
         return false
-    for name in costs.keys():
-        modify_resource(StringName(name), -float(costs[name]))
+    for cost_name in costs.keys():
+        modify_resource(StringName(cost_name), -float(costs[cost_name]))
     return true
 
-func restore_resource(name: StringName, amount: float) -> void:
-    name = StringName(name)
+func restore_resource(resource_name: StringName, amount: float) -> void:
+    var normalized_name := StringName(resource_name)
     if amount <= 0.0:
         return
-    modify_resource(name, amount)
+    modify_resource(normalized_name, amount)
 
 func apply_self_damage(payload: Dictionary) -> void:
     var amount := float(payload.get("amount", 0.0))
@@ -168,7 +174,10 @@ func _set_ability(slot: StringName, ability: ParticleAbility) -> void:
         old.on_unequip(self)
     _abilities[slot] = ability
     if ability:
-        ability.slot = slot
+        if ability.has_method("set_slot"):
+            ability.set_slot(slot)
+        else:
+            ability.slot = slot
         ability.on_equip(self)
 
 func _clear_abilities() -> void:
@@ -201,14 +210,16 @@ func use_passive_refresh(context: Dictionary = {}) -> Dictionary:
 func use_ultimate(context: Dictionary = {}) -> Dictionary:
     return use_ability(&"ultimate", context)
 
-func override_ability(slot: StringName, ability_id: StringName, duration: float, source) -> bool:
+func override_ability(slot: StringName, ability_id: StringName, duration: float, source: Variant) -> bool:
     slot = StringName(slot)
-    var ability := AbilityCatalog.create(StringName(ability_id))
+    var ability_instance: Variant = ABILITY_CATALOG.create(StringName(ability_id))
+    var ability: ParticleAbility = ability_instance if ability_instance is ParticleAbility else null
     if ability == null:
         push_warning("PlayerAvatar: Unable to override ability %s" % ability_id)
         return false
     _clear_override_for_slot(slot)
-    var original := _abilities.get(slot, null)
+    var original_instance: Variant = _abilities.get(slot)
+    var original: ParticleAbility = original_instance if original_instance is ParticleAbility else null
     _ability_overrides[slot] = {
         "original": original,
         "source": source,
@@ -224,10 +235,10 @@ func override_ability(slot: StringName, ability_id: StringName, duration: float,
         _ability_overrides[slot]["timer"] = timer
     return true
 
-func remove_ability_override(source) -> void:
-    var slots := []
+func remove_ability_override(source: Variant) -> void:
+    var slots: Array[StringName] = []
     for slot in _ability_overrides.keys():
-        var data := _ability_overrides[slot]
+        var data: Dictionary = _ability_overrides[slot]
         if source == null or data.get("source") == source:
             slots.append(slot)
     for slot in slots:
@@ -239,32 +250,34 @@ func clear_all_ability_overrides() -> void:
 func _clear_override_for_slot(slot: StringName) -> void:
     if not _ability_overrides.has(slot):
         return
-    var data := _ability_overrides[slot]
-    var timer: Timer = data.get("timer")
+    var data: Dictionary = _ability_overrides[slot]
+    var timer_variant: Variant = data.get("timer")
+    var timer: Timer = timer_variant if timer_variant is Timer else null
     if is_instance_valid(timer):
         timer.stop()
         timer.queue_free()
-    var original: ParticleAbility = data.get("original")
+    var original_variant: Variant = data.get("original")
+    var original: ParticleAbility = original_variant if original_variant is ParticleAbility else null
     _ability_overrides.erase(slot)
     _set_ability(slot, original)
 
-func _on_ability_override_timeout(slot: StringName, source, timer: Timer) -> void:
+func _on_ability_override_timeout(slot: StringName, source: Variant, timer: Timer) -> void:
     if not _ability_overrides.has(slot):
         timer.queue_free()
         return
-    var data := _ability_overrides[slot]
+    var data: Dictionary = _ability_overrides[slot]
     if data.get("source") != source:
         timer.queue_free()
         return
     _clear_override_for_slot(slot)
 
-func apply_stat_profile(source, profile: Dictionary) -> void:
+func apply_stat_profile(source: Variant, profile: Dictionary) -> void:
     var key := _profile_key(source)
     _profiles[key] = _normalize_profile(profile)
     _profile_sources[key] = source
     _recalculate_stats()
 
-func apply_temporary_profile(source, profile: Dictionary, duration: float) -> void:
+func apply_temporary_profile(source: Variant, profile: Dictionary, duration: float) -> void:
     _profile_uid += 1
     var key := _profile_key(source, "_temp_%d" % _profile_uid)
     _profiles[key] = _normalize_profile(profile)
@@ -281,7 +294,7 @@ func _on_temporary_profile_timeout(key: StringName, timer: Timer) -> void:
     _remove_profile_by_key(key)
     timer.queue_free()
 
-func remove_stat_profile(source) -> void:
+func remove_stat_profile(source: Variant) -> void:
     var removal_keys: Array[StringName] = []
     for key in _profile_sources.keys():
         if source == null or _profile_sources[key] == source:
@@ -294,7 +307,7 @@ func _remove_profile_by_key(key: StringName) -> void:
     _profile_sources.erase(key)
     _recalculate_stats()
 
-func _profile_key(source, suffix: String = "") -> StringName:
+func _profile_key(source: Variant, suffix: String = "") -> StringName:
     if source == null:
         return StringName("global%s" % suffix)
     return StringName("%s%s" % [str(source.get_instance_id()), suffix])
@@ -353,7 +366,11 @@ func get_class_tags() -> Array[StringName]:
 func _ensure_status_manager() -> void:
     if status_manager:
         return
-    status_manager = StatusManager.new()
+    var manager_instance = STATUS_MANAGER_SCRIPT.new()
+    status_manager = manager_instance if manager_instance is StatusManager else null
+    if status_manager == null:
+        push_error("PlayerAvatar: Failed to instantiate StatusManager")
+        return
     status_manager.name = "StatusManager"
     status_manager.host = self
     add_child(status_manager)
@@ -362,7 +379,7 @@ func _ensure_status_manager() -> void:
 func _initialize_resources() -> void:
     resource_pools.clear()
     set_resource(&"energy", 100.0, 100.0)
-    var stability_capacity := max(stability, 0.0) * 100.0
+    var stability_capacity: float = max(stability, 0.0) * 100.0
     if stability_capacity <= 0.0:
         stability_capacity = 1.0
     set_resource(&"stability", stability_capacity, stability_capacity)
@@ -374,7 +391,7 @@ func _update_instability_factor() -> void:
     var stability_pool: Dictionary = resource_pools.get(&"stability", {})
     var max_amount := float(stability_pool.get("max", 0.0))
     if max_amount > 0.0:
-        var ratio := float(stability_pool.get("current", max_amount)) / max_amount
+        var ratio: float = float(stability_pool.get("current", max_amount)) / max_amount
         baseline = max(baseline, 1.0 - ratio)
     status_manager.set_instability_factor(baseline)
 

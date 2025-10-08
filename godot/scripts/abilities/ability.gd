@@ -22,6 +22,9 @@ var slot: StringName = &""
 var codex_subject_id: String = ""
 var _cooldown_ready_time: float = 0.0
 
+func set_slot(value: StringName) -> void:
+    slot = value
+
 func on_equip(_user) -> void:
     pass
 
