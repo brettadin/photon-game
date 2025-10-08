@@ -50,10 +50,7 @@ func get_state() -> Dictionary:
 func set_state(state_data: Dictionary) -> void:
     if state_data.is_empty():
         return
-    _seed = int(abs(state_data.get("seed", _seed)))
-    if _seed == 0:
-        _seed = 1
-    _rng.seed = _seed
+    set_seed(int(state_data.get("seed", _seed)))
     var rng_state = state_data.get("state")
     if rng_state != null:
         _rng.state = rng_state
