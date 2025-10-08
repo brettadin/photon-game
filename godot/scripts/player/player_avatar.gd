@@ -174,7 +174,10 @@ func _set_ability(slot: StringName, ability: ParticleAbility) -> void:
         old.on_unequip(self)
     _abilities[slot] = ability
     if ability:
-        ability.slot = slot
+        if ability.has_method("set_slot"):
+            ability.set_slot(slot)
+        else:
+            ability.slot = slot
         ability.on_equip(self)
 
 func _clear_abilities() -> void:
