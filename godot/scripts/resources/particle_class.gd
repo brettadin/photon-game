@@ -20,7 +20,13 @@ enum ElementGroup {
     RADIOACTIVE,
 }
 
-@export var element_group: ElementGroup = ElementGroup.NONE setget set_element_group
+var _element_group: ElementGroup = ElementGroup.NONE
+
+@export var element_group: ElementGroup = ElementGroup.NONE:
+    set(value):
+        set_element_group(value)
+    get:
+        return _element_group
 
 ## Baseline stats supplied by the particle class itself.
 @export var base_reactivity: float = 1.0
@@ -105,7 +111,7 @@ const GROUP_TRAIT_SCRIPTS := {
 }
 
 func set_element_group(value: ElementGroup) -> void:
-    element_group = value
+    _element_group = value
     # When the group changes we clear any previously assigned overrides so the
     # new default perks are used unless explicitly overridden again.
     if group_trait_scripts.is_empty():
