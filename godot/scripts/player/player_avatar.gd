@@ -41,11 +41,11 @@ var class_tags: Array[StringName] = []
 var resource_pools: Dictionary = {}
 var status_manager: StatusManager = null
 
-var _abilities := {}
-var _profiles := {}
-var _profile_sources := {}
+var _abilities: Dictionary = {}
+var _profiles: Dictionary = {}
+var _profile_sources: Dictionary = {}
 var _profile_uid := 0
-var _ability_overrides := {}
+var _ability_overrides: Dictionary = {}
 
 func _enter_tree() -> void:
     _ensure_status_manager()
@@ -210,15 +210,15 @@ func use_passive_refresh(context: Dictionary = {}) -> Dictionary:
 func use_ultimate(context: Dictionary = {}) -> Dictionary:
     return use_ability(&"ultimate", context)
 
-func override_ability(slot: StringName, ability_id: StringName, duration: float, source) -> bool:
+func override_ability(slot: StringName, ability_id: StringName, duration: float, source: Variant) -> bool:
     slot = StringName(slot)
-    var ability_instance = ABILITY_CATALOG.create(StringName(ability_id))
+    var ability_instance: Variant = ABILITY_CATALOG.create(StringName(ability_id))
     var ability: ParticleAbility = ability_instance if ability_instance is ParticleAbility else null
     if ability == null:
         push_warning("PlayerAvatar: Unable to override ability %s" % ability_id)
         return false
     _clear_override_for_slot(slot)
-    var original_instance = _abilities.get(slot)
+    var original_instance: Variant = _abilities.get(slot)
     var original: ParticleAbility = original_instance if original_instance is ParticleAbility else null
     _ability_overrides[slot] = {
         "original": original,
@@ -235,10 +235,10 @@ func override_ability(slot: StringName, ability_id: StringName, duration: float,
         _ability_overrides[slot]["timer"] = timer
     return true
 
-func remove_ability_override(source) -> void:
-    var slots := []
+func remove_ability_override(source: Variant) -> void:
+    var slots: Array[StringName] = []
     for slot in _ability_overrides.keys():
-        var data := _ability_overrides[slot]
+        var data: Dictionary = _ability_overrides[slot]
         if source == null or data.get("source") == source:
             slots.append(slot)
     for slot in slots:
@@ -251,33 +251,33 @@ func _clear_override_for_slot(slot: StringName) -> void:
     if not _ability_overrides.has(slot):
         return
     var data: Dictionary = _ability_overrides[slot]
-    var timer_variant = data.get("timer")
+    var timer_variant: Variant = data.get("timer")
     var timer: Timer = timer_variant if timer_variant is Timer else null
     if is_instance_valid(timer):
         timer.stop()
         timer.queue_free()
-    var original_variant = data.get("original")
+    var original_variant: Variant = data.get("original")
     var original: ParticleAbility = original_variant if original_variant is ParticleAbility else null
     _ability_overrides.erase(slot)
     _set_ability(slot, original)
 
-func _on_ability_override_timeout(slot: StringName, source, timer: Timer) -> void:
+func _on_ability_override_timeout(slot: StringName, source: Variant, timer: Timer) -> void:
     if not _ability_overrides.has(slot):
         timer.queue_free()
         return
-    var data := _ability_overrides[slot]
+    var data: Dictionary = _ability_overrides[slot]
     if data.get("source") != source:
         timer.queue_free()
         return
     _clear_override_for_slot(slot)
 
-func apply_stat_profile(source, profile: Dictionary) -> void:
+func apply_stat_profile(source: Variant, profile: Dictionary) -> void:
     var key := _profile_key(source)
     _profiles[key] = _normalize_profile(profile)
     _profile_sources[key] = source
     _recalculate_stats()
 
-func apply_temporary_profile(source, profile: Dictionary, duration: float) -> void:
+func apply_temporary_profile(source: Variant, profile: Dictionary, duration: float) -> void:
     _profile_uid += 1
     var key := _profile_key(source, "_temp_%d" % _profile_uid)
     _profiles[key] = _normalize_profile(profile)
@@ -294,7 +294,7 @@ func _on_temporary_profile_timeout(key: StringName, timer: Timer) -> void:
     _remove_profile_by_key(key)
     timer.queue_free()
 
-func remove_stat_profile(source) -> void:
+func remove_stat_profile(source: Variant) -> void:
     var removal_keys: Array[StringName] = []
     for key in _profile_sources.keys():
         if source == null or _profile_sources[key] == source:
@@ -307,7 +307,7 @@ func _remove_profile_by_key(key: StringName) -> void:
     _profile_sources.erase(key)
     _recalculate_stats()
 
-func _profile_key(source, suffix: String = "") -> StringName:
+func _profile_key(source: Variant, suffix: String = "") -> StringName:
     if source == null:
         return StringName("global%s" % suffix)
     return StringName("%s%s" % [str(source.get_instance_id()), suffix])
@@ -379,7 +379,7 @@ func _ensure_status_manager() -> void:
 func _initialize_resources() -> void:
     resource_pools.clear()
     set_resource(&"energy", 100.0, 100.0)
-    var stability_capacity := max(stability, 0.0) * 100.0
+    var stability_capacity: float = max(stability, 0.0) * 100.0
     if stability_capacity <= 0.0:
         stability_capacity = 1.0
     set_resource(&"stability", stability_capacity, stability_capacity)
