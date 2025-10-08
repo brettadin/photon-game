@@ -24,7 +24,13 @@ signal self_damage_taken(amount: float, payload: Dictionary)
 }
 @export var base_keywords: Array[StringName] = []
 
-@export var particle_class: ParticleClassDefinition = null setget set_particle_class
+var _particle_class: ParticleClassDefinition = null
+
+@export var particle_class: ParticleClassDefinition = null:
+    set(value):
+        set_particle_class(value)
+    get:
+        return _particle_class
 var current_stats: Dictionary = {}
 var current_keywords: Array[StringName] = []
 var mass: float = 1.0
@@ -55,22 +61,22 @@ func _ready() -> void:
 
 func set_particle_class(value: ParticleClassDefinition) -> void:
     _ensure_status_manager()
-    if value == particle_class:
+    if value == _particle_class:
         return
     _clear_abilities()
-    particle_class = value
-    if particle_class:
-        mass = particle_class.mass
-        charge = particle_class.charge
-        stability = particle_class.stability
+    _particle_class = value
+    if _particle_class:
+        mass = _particle_class.mass
+        charge = _particle_class.charge
+        stability = _particle_class.stability
         class_tags.clear()
-        for tag in particle_class.class_tags:
+        for tag in _particle_class.class_tags:
             if typeof(tag) == TYPE_STRING_NAME:
                 class_tags.append(tag)
             else:
                 class_tags.append(StringName(tag))
         _initialize_resources()
-        var loadout := particle_class.create_loadout()
+        var loadout := _particle_class.create_loadout()
         for slot in loadout:
             _set_ability(slot, loadout[slot])
     else:
@@ -81,7 +87,7 @@ func set_particle_class(value: ParticleClassDefinition) -> void:
         _initialize_resources()
     _update_instability_factor()
     _update_status_immunities()
-    emit_signal("class_changed", particle_class)
+    emit_signal("class_changed", _particle_class)
 
 func get_status_manager() -> StatusManager:
     return status_manager
