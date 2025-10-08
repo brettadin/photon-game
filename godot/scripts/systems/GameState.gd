@@ -15,8 +15,8 @@ func _ready() -> void:
         RunRNG.set_seed(run_seed)
         run_metadata = {}
 
-func start_new_run(seed: int = RunRNG.generate_seed_from_time(), metadata: Dictionary = {}) -> void:
-    run_seed = seed
+func start_new_run(new_seed: int = RunRNG.generate_seed_from_time(), metadata: Dictionary = {}) -> void:
+    run_seed = new_seed
     run_metadata = metadata.duplicate(true)
     RunRNG.set_seed(run_seed)
     is_run_active = true
