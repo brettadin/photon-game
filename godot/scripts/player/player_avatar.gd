@@ -387,7 +387,7 @@ func _initialize_resources() -> void:
 func _update_instability_factor() -> void:
     if status_manager == null:
         return
-    var baseline := clamp(1.0 - stability, 0.0, 1.0)
+    var baseline: float = clamp(1.0 - stability, 0.0, 1.0)
     var stability_pool: Dictionary = resource_pools.get(&"stability", {})
     var max_amount := float(stability_pool.get("max", 0.0))
     if max_amount > 0.0:

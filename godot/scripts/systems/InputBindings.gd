@@ -68,8 +68,13 @@ func _register_action(action_name: StringName, definition: Dictionary) -> void:
     var joypad_axes: Array = definition.get("joypad_axes", [])
     for axis_data in joypad_axes:
         var motion_event := InputEventJoypadMotion.new()
-        var axis_value := axis_data.get("axis", JoyAxis.JOY_AXIS_LEFT_X)
-        motion_event.axis = (axis_value as JoyAxis) if axis_value is JoyAxis else (int(axis_value) as JoyAxis)
+        var axis_raw := axis_data.get("axis", JoyAxis.JOY_AXIS_LEFT_X)
+        var axis_value: JoyAxis = JoyAxis.JOY_AXIS_LEFT_X
+        if axis_raw is JoyAxis:
+            axis_value = axis_raw
+        else:
+            axis_value = JoyAxis(int(axis_raw))
+        motion_event.axis = axis_value
         motion_event.axis_value = float(axis_data.get("value", 0.0))
         InputMap.action_add_event(action_name, motion_event)
 
