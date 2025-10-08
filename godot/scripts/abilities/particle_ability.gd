@@ -7,8 +7,6 @@ class_name ParticleAbility
 @export var persistent_profile: Dictionary = {}
 @export var activation_log_message: String = ""
 
-var slot: StringName = &""
-
 func on_equip(player: PlayerAvatar) -> void:
     if not persistent_profile.is_empty():
         player.apply_stat_profile(self, persistent_profile)
